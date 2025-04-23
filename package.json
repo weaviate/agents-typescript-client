@@ -1,0 +1,11 @@
+{
+  "name": "@weaviate/agents-client",
+  "version": "0.0.1",
+  "description": "JS/TS client for Weaviate Agents",
+  "scripts": {},
+  "keywords": [
+    "weaviate"
+  ],
+  "author": "Weaviate",
+  "license": "SEE LICENSE IN LICENSE"
+}
