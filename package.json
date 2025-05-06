@@ -1,11 +1,21 @@
 {
-  "name": "@weaviate/agents-client",
+  "name": "@weaviate/agents",
   "version": "0.0.1",
   "description": "JS/TS client for Weaviate Agents",
-  "scripts": {},
+  "exports": "./dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
   "keywords": [
     "weaviate"
   ],
   "author": "Weaviate",
-  "license": "SEE LICENSE IN LICENSE"
+  "license": "SEE LICENSE IN LICENSE",
+  "peerDependencies": {
+    "weaviate-client": "^3.5.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
 }
