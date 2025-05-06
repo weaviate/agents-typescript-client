@@ -51,11 +51,11 @@ export class QueryAgent {
   }
 }
 
-export interface QueryAgentOptions {
+export type QueryAgentOptions = {
   systemPrompt?: string;
   agentsHost?: string;
-}
+};
 
-export interface QueryAgentRunOptions {
+export type QueryAgentRunOptions = {
   viewProperties?: string[];
-}
+};

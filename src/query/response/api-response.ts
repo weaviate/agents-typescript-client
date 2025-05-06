@@ -5,7 +5,7 @@ import {
   ComparisonOperator,
 } from "./response.js";
 
-export interface ApiQueryAgentResponse {
+export type ApiQueryAgentResponse = {
   original_query: string;
   collection_names: string[];
   searches: ApiSearchResult[][];
@@ -19,78 +19,76 @@ export interface ApiQueryAgentResponse {
   missing_information: string[];
   final_answer: string;
   sources: ApiSource[];
-}
+};
 
-export interface ApiSearchResult {
+export type ApiSearchResult = {
   collection: string;
   queries: string[];
   filters: ApiPropertyFilter[];
   filter_operators: "AND" | "OR";
-}
+};
 
 export type ApiPropertyFilter =
   | ApiIntegerPropertyFilter
   | ApiTextPropertyFilter
   | ApiBooleanPropertyFilter;
 
-interface ApiPropertyFilterBase {
+type ApiPropertyFilterBase = {
   property_name: string;
   operator: ComparisonOperator;
-}
+};
 
-export interface ApiIntegerPropertyFilter extends ApiPropertyFilterBase {
+export type ApiIntegerPropertyFilter = ApiPropertyFilterBase & {
   value: number;
-}
+};
 
-export interface ApiTextPropertyFilter extends ApiPropertyFilterBase {
+export type ApiTextPropertyFilter = ApiPropertyFilterBase & {
   value: string;
-}
+};
 
-export interface ApiBooleanPropertyFilter extends ApiPropertyFilterBase {
+export type ApiBooleanPropertyFilter = ApiPropertyFilterBase & {
   value: boolean;
-}
+};
 
-export interface ApiAggregationResult {
+export type ApiAggregationResult = {
   collection: string;
   search_query?: string;
   groupby_property?: string;
   aggregations: ApiPropertyAggregation[];
   filters: ApiPropertyFilter[];
-}
+};
 
 export type ApiPropertyAggregation =
   | ApiIntegerPropertyAggregation
   | ApiTextPropertyAggregation
   | ApiBooleanPropertyAggregation;
 
-interface ApiPropertyAggregationBase {
+type ApiPropertyAggregationBase = {
   property_name: string;
-}
+};
 
-export interface ApiIntegerPropertyAggregation
-  extends ApiPropertyAggregationBase {
+export type ApiIntegerPropertyAggregation = ApiPropertyAggregationBase & {
   metrics: NumericMetrics;
-}
+};
 
-export interface ApiTextPropertyAggregation extends ApiPropertyAggregationBase {
+export type ApiTextPropertyAggregation = ApiPropertyAggregationBase & {
   metrics: TextMetrics;
   top_occurrences_limit?: number;
-}
+};
 
-export interface ApiBooleanPropertyAggregation
-  extends ApiPropertyAggregationBase {
+export type ApiBooleanPropertyAggregation = ApiPropertyAggregationBase & {
   metrics: BooleanMetrics;
-}
+};
 
-export interface ApiUsage {
+export type ApiUsage = {
   requests: number;
   request_tokens?: number;
   response_tokens?: number;
   total_tokens?: number;
   details?: Record<string, number>;
-}
+};
 
-export interface ApiSource {
+export type ApiSource = {
   object_id: string;
   collection: string;
-}
+};

@@ -1,4 +1,4 @@
-export interface QueryAgentResponse {
+export type QueryAgentResponse = {
   originalQuery: string;
   collectionNames: string[];
   searches: SearchResult[][];
@@ -13,36 +13,36 @@ export interface QueryAgentResponse {
   finalAnswer: string;
   sources: Source[];
   display(): void;
-}
+};
 
-export interface SearchResult {
+export type SearchResult = {
   collection: string;
   queries: string[];
   filters: PropertyFilter[];
   filterOperators: "AND" | "OR";
-}
+};
 
 export type PropertyFilter =
   | IntegerPropertyFilter
   | TextPropertyFilter
   | BooleanPropertyFilter;
 
-interface PropertyFilterBase {
+type PropertyFilterBase = {
   propertyName: string;
   operator: ComparisonOperator;
-}
+};
 
-export interface IntegerPropertyFilter extends PropertyFilterBase {
+export type IntegerPropertyFilter = PropertyFilterBase & {
   value: number;
-}
+};
 
-export interface TextPropertyFilter extends PropertyFilterBase {
+export type TextPropertyFilter = PropertyFilterBase & {
   value: string;
-}
+};
 
-export interface BooleanPropertyFilter extends PropertyFilterBase {
+export type BooleanPropertyFilter = PropertyFilterBase & {
   value: boolean;
-}
+};
 
 export enum ComparisonOperator {
   Equals = "=",
@@ -54,35 +54,35 @@ export enum ComparisonOperator {
   Like = "LIKE",
 }
 
-export interface AggregationResult {
+export type AggregationResult = {
   collection: string;
   searchQuery?: string;
   groupbyProperty?: string;
   aggregations: PropertyAggregation[];
   filters: PropertyFilter[];
-}
+};
 
 export type PropertyAggregation =
   | IntegerPropertyAggregation
   | TextPropertyAggregation
   | BooleanPropertyAggregation;
 
-interface PropertyAggregationBase {
+type PropertyAggregationBase = {
   propertyName: string;
-}
+};
 
-export interface IntegerPropertyAggregation extends PropertyAggregationBase {
+export type IntegerPropertyAggregation = PropertyAggregationBase & {
   metrics: NumericMetrics;
-}
+};
 
-export interface TextPropertyAggregation extends PropertyAggregationBase {
+export type TextPropertyAggregation = PropertyAggregationBase & {
   metrics: TextMetrics;
   topOccurrencesLimit?: number;
-}
+};
 
-export interface BooleanPropertyAggregation extends PropertyAggregationBase {
+export type BooleanPropertyAggregation = PropertyAggregationBase & {
   metrics: BooleanMetrics;
-}
+};
 
 export enum NumericMetrics {
   Count = "COUNT",
@@ -110,15 +110,15 @@ export enum BooleanMetrics {
   PercentageFalse = "PERCENTAGE_FALSE",
 }
 
-export interface Usage {
+export type Usage = {
   requests: number;
   requestTokens?: number;
   responseTokens?: number;
   totalTokens?: number;
   details?: Record<string, number>;
-}
+};
 
-export interface Source {
+export type Source = {
   objectId: string;
   collection: string;
-}
+};
