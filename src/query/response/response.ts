@@ -32,14 +32,17 @@ type PropertyFilterBase = {
   operator: ComparisonOperator;
 };
 
+/** Filter numeric properties using comparison operators */
 export type IntegerPropertyFilter = PropertyFilterBase & {
   value: number;
 };
 
+/** Filter text properties using equality or LIKE operators */
 export type TextPropertyFilter = PropertyFilterBase & {
   value: string;
 };
 
+/** Filter boolean properties using equality operators */
 export type BooleanPropertyFilter = PropertyFilterBase & {
   value: boolean;
 };
@@ -54,6 +57,12 @@ export enum ComparisonOperator {
   Like = "LIKE",
 }
 
+/**
+ * The aggregations performed on a collection in a vector database.
+ *
+ * They should be based on the original user query and can include multiple
+ * aggregations across different properties and metrics.
+ */
 export type AggregationResult = {
   collection: string;
   searchQuery?: string;
@@ -71,15 +80,18 @@ type PropertyAggregationBase = {
   propertyName: string;
 };
 
+/** Aggregate numeric properties using statistical functions */
 export type IntegerPropertyAggregation = PropertyAggregationBase & {
   metrics: NumericMetrics;
 };
 
+/** Aggregate text properties using frequency analysis */
 export type TextPropertyAggregation = PropertyAggregationBase & {
   metrics: TextMetrics;
   topOccurrencesLimit?: number;
 };
 
+/** Aggregate boolean properties using statistical functions */
 export type BooleanPropertyAggregation = PropertyAggregationBase & {
   metrics: BooleanMetrics;
 };
