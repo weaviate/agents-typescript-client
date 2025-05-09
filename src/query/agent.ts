@@ -1,6 +1,7 @@
 import { WeaviateClient } from "weaviate-client";
 import { QueryAgentResponse } from "./response/response.js";
 import { mapResponse } from "./response/response-mapping.js";
+import { mapApiResponse } from "./response/api-reponse-mapping.js";
 
 /**
  * An agent for executing agentic queries against Weaviate.
@@ -43,7 +44,7 @@ export class QueryAgent {
    */
   async run(
     query: string,
-    { viewProperties }: QueryAgentRunOptions = {}
+    { viewProperties, context }: QueryAgentRunOptions = {}
   ): Promise<QueryAgentResponse> {
     const { host, bearerToken, headers } =
       await this.client.getConnectionDetails();
@@ -61,16 +62,15 @@ export class QueryAgent {
         collection_names: this.collections,
         collection_view_properties: viewProperties,
         system_prompt: this.systemPrompt,
+        previous_response: context ? mapApiResponse(context) : undefined,
       }),
     });
 
-    const responseBody = await response.json();
-
     if (!response.ok) {
-      throw Error(`Query agent failed. ${JSON.stringify(responseBody)}`);
+      throw Error(`Query agent failed. ${await response.text()}`);
     }
 
-    return mapResponse(responseBody);
+    return mapResponse(await response.json());
   }
 }
 
@@ -86,4 +86,6 @@ export type QueryAgentOptions = {
 export type QueryAgentRunOptions = {
   /** List of of property names the agent has the ability to view across all collections. */
   viewProperties?: string[];
+  /** Previous response from the agent. */
+  context?: QueryAgentResponse;
 };
