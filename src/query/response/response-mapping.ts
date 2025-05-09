@@ -48,27 +48,28 @@ const mapSearches = (searches: ApiSearchResult[][]): SearchResult[][] =>
     searchGroup.map((result) => ({
       collection: result.collection,
       queries: result.queries,
-      filters: result.filters.map(mapPropertyFilter),
+      filters: result.filters.map(mapPropertyFilters),
       filterOperators: result.filter_operators,
     }))
   );
 
-const mapPropertyFilter = (filter: ApiPropertyFilter): PropertyFilter => ({
-  propertyName: filter.property_name,
-  operator: filter.operator,
-  value: filter.value,
-});
+const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
+  filters.map((filter) => ({
+    propertyName: filter.property_name,
+    operator: filter.operator,
+    value: filter.value,
+  }));
 
 const mapAggregations = (
   aggregations: ApiAggregationResult[][]
 ): AggregationResult[][] =>
-  aggregations.map((aggGroup) =>
-    aggGroup.map((result) => ({
+  aggregations.map((aggregationGroup) =>
+    aggregationGroup.map((result) => ({
       collection: result.collection,
       searchQuery: result.search_query,
       groupbyProperty: result.groupby_property,
       aggregations: result.aggregations.map(mapPropertyAggregation),
-      filters: result.filters.map(mapPropertyFilter),
+      filters: mapPropertyFilters(result.filters),
     }))
   );
 

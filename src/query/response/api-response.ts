@@ -24,7 +24,7 @@ export type ApiQueryAgentResponse = {
 export type ApiSearchResult = {
   collection: string;
   queries: string[];
-  filters: ApiPropertyFilter[];
+  filters: ApiPropertyFilter[][];
   filter_operators: "AND" | "OR";
 };
 
