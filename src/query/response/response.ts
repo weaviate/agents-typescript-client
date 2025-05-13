@@ -18,7 +18,7 @@ export type QueryAgentResponse = {
 export type SearchResult = {
   collection: string;
   queries: string[];
-  filters: PropertyFilter[];
+  filters: PropertyFilter[][];
   filterOperators: "AND" | "OR";
 };
 
