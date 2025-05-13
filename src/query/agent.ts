@@ -1,7 +1,7 @@
 import { WeaviateClient } from "weaviate-client";
 import { QueryAgentResponse } from "./response/response.js";
 import { mapResponse } from "./response/response-mapping.js";
-import { mapApiResponse } from "./response/api-reponse-mapping.js";
+import { mapApiResponse } from "./response/api-response-mapping.js";
 
 /**
  * An agent for executing agentic queries against Weaviate.
