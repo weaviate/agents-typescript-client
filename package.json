@@ -4,16 +4,27 @@
   "description": "JS/TS client for Weaviate Agents",
   "exports": "./dist/index.js",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepack": "pnpm build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weaviate/agents-typescript-client.git"
   },
   "keywords": [
     "weaviate"
   ],
   "author": "Weaviate",
   "license": "SEE LICENSE IN LICENSE",
+  "files": [
+    "dist"
+  ],
   "peerDependencies": {
-    "weaviate-client": "^3.5.2"
+    "weaviate-client": "^3.5.4"
   },
   "devDependencies": {
     "typescript": "^5.8.3"
