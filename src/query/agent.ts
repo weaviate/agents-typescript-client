@@ -44,7 +44,7 @@ export class QueryAgent {
    */
   async run(
     query: string,
-    { viewProperties, context }: QueryAgentRunOptions = {}
+    { viewProperties, context, targetVector }: QueryAgentRunOptions = {}
   ): Promise<QueryAgentResponse> {
     const { host, bearerToken, headers } =
       await this.client.getConnectionDetails();
@@ -63,6 +63,7 @@ export class QueryAgent {
         collection_view_properties: viewProperties,
         system_prompt: this.systemPrompt,
         previous_response: context ? mapApiResponse(context) : undefined,
+        target_vector: targetVector,
       }),
     });
 
@@ -86,6 +87,14 @@ export type QueryAgentOptions = {
 export type QueryAgentRunOptions = {
   /** List of of property names the agent has the ability to view across all collections. */
   viewProperties?: string[];
+  /**
+   * Target vector for the query if a collection uses named vector.
+   * When multiple collections are provided to the query agent,
+   * a mapping must be used to map collection names to target vectors.
+   */
+  targetVector?: TargetVector | Record<string, TargetVector>;
   /** Previous response from the agent. */
   context?: QueryAgentResponse;
 };
+
+type TargetVector = string | string[];
