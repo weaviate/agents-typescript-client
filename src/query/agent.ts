@@ -2,6 +2,7 @@ import { WeaviateClient } from "weaviate-client";
 import { QueryAgentResponse } from "./response/response.js";
 import { mapResponse } from "./response/response-mapping.js";
 import { mapApiResponse } from "./response/api-response-mapping.js";
+import { mapCollections, QueryAgentCollectionConfig } from "./collection.js";
 
 /**
  * An agent for executing agentic queries against Weaviate.
@@ -13,6 +14,7 @@ import { mapApiResponse } from "./response/api-response-mapping.js";
  * For more information, see the [Weaviate Query Agent Docs](https://weaviate.io/developers/agents/query)
  */
 export class QueryAgent {
+  private collections?: (string | QueryAgentCollectionConfig)[];
   private systemPrompt?: string;
   private agentsHost: string;
 
@@ -20,17 +22,17 @@ export class QueryAgent {
    * Creates a new QueryAgent instance.
    *
    * @param client - The Weaviate client instance.
-   * @param collections - The collections to query.
    * @param options - Additional options for the QueryAgent.
    */
   constructor(
     private client: WeaviateClient,
-    private collections: string[],
     {
+      collections,
       systemPrompt,
       agentsHost = "https://api.agents.weaviate.io",
     }: QueryAgentOptions = {}
   ) {
+    this.collections = collections;
     this.systemPrompt = systemPrompt;
     this.agentsHost = agentsHost;
   }
@@ -44,8 +46,13 @@ export class QueryAgent {
    */
   async run(
     query: string,
-    { viewProperties, context, targetVector }: QueryAgentRunOptions = {}
+    { collections, context }: QueryAgentRunOptions = {}
   ): Promise<QueryAgentResponse> {
+    const target_collections = collections ?? this.collections;
+    if (!target_collections) {
+      throw Error("No collections provided to the query agent.");
+    }
+
     const { host, bearerToken, headers } =
       await this.client.getConnectionDetails();
 
@@ -59,11 +66,9 @@ export class QueryAgent {
       body: JSON.stringify({
         headers,
         query,
-        collection_names: this.collections,
-        collection_view_properties: viewProperties,
+        collections: mapCollections(target_collections),
         system_prompt: this.systemPrompt,
         previous_response: context ? mapApiResponse(context) : undefined,
-        target_vector: targetVector,
       }),
     });
 
@@ -77,6 +82,8 @@ export class QueryAgent {
 
 /** Options for the QueryAgent. */
 export type QueryAgentOptions = {
+  /** List of collections to query. Will be overriden if passed in the `run` method. */
+  collections?: (string | QueryAgentCollectionConfig)[];
   /** System prompt to guide the agent's behavior. */
   systemPrompt?: string;
   /** Host of the agents service. */
@@ -85,16 +92,8 @@ export type QueryAgentOptions = {
 
 /** Options for the QueryAgent run. */
 export type QueryAgentRunOptions = {
-  /** List of of property names the agent has the ability to view across all collections. */
-  viewProperties?: string[];
-  /**
-   * Target vector for the query if a collection uses named vector.
-   * When multiple collections are provided to the query agent,
-   * a mapping must be used to map collection names to target vectors.
-   */
-  targetVector?: TargetVector | Record<string, TargetVector>;
+  /** List of collections to query. Will override any collections if passed in the constructor. */
+  collections?: (string | QueryAgentCollectionConfig)[];
   /** Previous response from the agent. */
   context?: QueryAgentResponse;
 };
-
-type TargetVector = string | string[];
