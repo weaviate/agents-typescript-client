@@ -48,8 +48,8 @@ export class QueryAgent {
     query: string,
     { collections, context }: QueryAgentRunOptions = {}
   ): Promise<QueryAgentResponse> {
-    const target_collections = collections ?? this.collections;
-    if (!target_collections) {
+    const targetCollections = collections ?? this.collections;
+    if (!targetCollections) {
       throw Error("No collections provided to the query agent.");
     }
 
@@ -66,7 +66,7 @@ export class QueryAgent {
       body: JSON.stringify({
         headers,
         query,
-        collections: mapCollections(target_collections),
+        collections: mapCollections(targetCollections),
         system_prompt: this.systemPrompt,
         previous_response: context ? mapApiResponse(context) : undefined,
       }),
