@@ -6,6 +6,8 @@ import {
   PropertyAggregation,
   Usage,
   Source,
+  StreamedTokens,
+  ProgressMessage,
 } from "./response.js";
 
 import {
@@ -18,10 +20,13 @@ import {
   ApiSource,
 } from "./api-response.js";
 
+import { ServerSentEvent } from "./server-sent-events.js";
+
 export const mapResponse = (
   response: ApiQueryAgentResponse
 ): QueryAgentResponse => {
   const properties: ResponseProperties = {
+    output_type: "final_state",
     originalQuery: response.original_query,
     collectionNames: response.collection_names,
     searches: mapSearches(response.searches),
@@ -103,3 +108,56 @@ const display = (response: ResponseProperties) => {
 };
 
 type ResponseProperties = Omit<QueryAgentResponse, "display">;
+
+export const mapProgressMessageFromSSE = (sse: ServerSentEvent): ProgressMessage => {
+  const data: ProgressMessage = JSON.parse(sse.data);
+  if (data.output_type !== "progress_message") {
+    throw new Error(`Expected output_type "progress_message", got ${data.output_type}`);
+  }
+  
+  return {
+    output_type: "progress_message",
+    stage: data.stage,
+    message: data.message,
+    details: data.details,
+  };
+};
+
+export const mapStreamedTokensFromSSE = (sse: ServerSentEvent): StreamedTokens => {
+  const data: StreamedTokens = JSON.parse(sse.data);
+  if (data.output_type !== "streamed_tokens") {
+    throw new Error(`Expected output_type "streamed_tokens", got ${data.output_type}`);
+  }
+
+  return {
+    output_type: "streamed_tokens",
+    delta: data.delta,
+  };
+};
+
+
+export const mapResponseFromSSE = (sse: ServerSentEvent): QueryAgentResponse => {
+  const data: ApiQueryAgentResponse = JSON.parse(sse.data);
+
+  const properties: ResponseProperties = {
+    output_type: "final_state",
+    originalQuery: data.original_query,
+    collectionNames: data.collection_names,
+    searches: mapSearches(data.searches),
+    aggregations: mapAggregations(data.aggregations),
+    usage: mapUsage(data.usage),
+    totalTime: data.total_time,
+    aggregationAnswer: data.aggregation_answer,
+    hasAggregationAnswer: data.has_aggregation_answer,
+    hasSearchAnswer: data.has_search_answer,
+    isPartialAnswer: data.is_partial_answer,
+    missingInformation: data.missing_information,
+    finalAnswer: data.final_answer,
+    sources: mapSources(data.sources),
+  };
+
+  return {
+    ...properties,
+    display: () => display(properties),
+  };
+};
