@@ -136,11 +136,20 @@ export type Source = {
   collection: string;
 };
 
+export type QueryWithCollection = {
+  query: string;
+  collection: string;
+};
+
+export type ProgressDetails = {
+  queries?: QueryWithCollection[];
+};
+
 export type ProgressMessage = {
   output_type: "progress_message";
   stage: string;
   message: string;
-  details: Record<string, any>;
+  details: ProgressDetails;
 };
 
 export type StreamedTokens = {
