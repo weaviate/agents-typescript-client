@@ -1,7 +1,8 @@
 import { WeaviateClient } from "weaviate-client";
-import { QueryAgentResponse } from "./response/response.js";
-import { mapResponse } from "./response/response-mapping.js";
+import { QueryAgentResponse, ProgressMessage, StreamedTokens } from "./response/response.js";
+import { mapResponse, mapProgressMessageFromSSE, mapStreamedTokensFromSSE, mapResponseFromSSE } from "./response/response-mapping.js";
 import { mapApiResponse } from "./response/api-response-mapping.js";
+import { fetchServerSentEvents } from "./response/server-sent-events.js";
 import { mapCollections, QueryAgentCollectionConfig } from "./collection.js";
 
 /**
@@ -78,6 +79,58 @@ export class QueryAgent {
 
     return mapResponse(await response.json());
   }
+
+  /**
+   * Stream responses from the query agent.
+   *
+   * @param query - The natural language query string for the agent.
+   * @param options - Additional options for the run.
+   * @returns The response from the query agent.
+   */
+  async *stream(
+    query: string,
+    { collections, context, includeProgress }: QueryAgentStreamOptions = {}
+  ): AsyncGenerator<ProgressMessage | StreamedTokens | QueryAgentResponse> {
+    const targetCollections = collections ?? this.collections;
+
+    if (!targetCollections) {
+      throw Error("No collections provided to the query agent.");
+    }
+
+    const { host, bearerToken, headers } =
+      await this.client.getConnectionDetails();
+
+    const sseStream = fetchServerSentEvents(`${this.agentsHost}/agent/stream_query`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: bearerToken!,
+        "X-Weaviate-Cluster-Url": host,
+      },
+      body: JSON.stringify({
+        headers,
+        query,
+        collections: mapCollections(targetCollections),
+        system_prompt: this.systemPrompt,
+        previous_response: context ? mapApiResponse(context) : undefined,
+        include_progress: includeProgress ?? true,
+      }),
+    });
+
+    for await (const event of sseStream) {
+      let output: ProgressMessage | StreamedTokens | QueryAgentResponse;
+      if (event.event === "progress_message") {
+        output = mapProgressMessageFromSSE(event);
+      } else if (event.event === "streamed_tokens") {
+        output = mapStreamedTokensFromSSE(event);
+      } else if (event.event === "final_state") {
+        output = mapResponseFromSSE(event);
+      } else {
+        throw new Error(`Unexpected event type: ${event.event}`);
+      }
+      yield output;
+    }
+  }
 }
 
 /** Options for the QueryAgent. */
@@ -96,4 +149,14 @@ export type QueryAgentRunOptions = {
   collections?: (string | QueryAgentCollectionConfig)[];
   /** Previous response from the agent. */
   context?: QueryAgentResponse;
+};
+
+/** Options for the QueryAgent stream. */
+export type QueryAgentStreamOptions = {
+  /** List of collections to query. Will override any collections if passed in the constructor. */
+  collections?: (string | QueryAgentCollectionConfig)[];
+  /** Previous response from the agent. */
+  context?: QueryAgentResponse;
+  /** Include progress messages in the stream. */
+  includeProgress?: boolean;
 };

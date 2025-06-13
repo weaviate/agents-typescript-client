@@ -1,4 +1,5 @@
 export type QueryAgentResponse = {
+  output_type: "final_state";
   originalQuery: string;
   collectionNames: string[];
   searches: SearchResult[][];
@@ -133,4 +134,25 @@ export type Usage = {
 export type Source = {
   objectId: string;
   collection: string;
+};
+
+export type QueryWithCollection = {
+  query: string;
+  collection: string;
+};
+
+export type ProgressDetails = {
+  queries?: QueryWithCollection[];
+};
+
+export type ProgressMessage = {
+  output_type: "progress_message";
+  stage: string;
+  message: string;
+  details: ProgressDetails;
+};
+
+export type StreamedTokens = {
+  output_type: "streamed_tokens";
+  delta: string;
 };
