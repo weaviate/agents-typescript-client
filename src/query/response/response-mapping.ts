@@ -114,7 +114,7 @@ export const mapProgressMessageFromSSE = (sse: ServerSentEvent): ProgressMessage
   if (data.output_type !== "progress_message") {
     throw new Error(`Expected output_type "progress_message", got ${data.output_type}`);
   }
-  
+
   return {
     output_type: "progress_message",
     stage: data.stage,
