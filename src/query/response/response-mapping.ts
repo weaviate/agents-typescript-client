@@ -26,7 +26,7 @@ export const mapResponse = (
   response: ApiQueryAgentResponse
 ): QueryAgentResponse => {
   const properties: ResponseProperties = {
-    output_type: "final_state",
+    outputType: "finalState",
     originalQuery: response.original_query,
     collectionNames: response.collection_names,
     searches: mapSearches(response.searches),
@@ -109,28 +109,36 @@ const display = (response: ResponseProperties) => {
 
 type ResponseProperties = Omit<QueryAgentResponse, "display">;
 
+type ProgressMessageJSON = Omit<ProgressMessage, "outputType"> & {
+  output_type: "progress_message";
+};
+
 export const mapProgressMessageFromSSE = (sse: ServerSentEvent): ProgressMessage => {
-  const data: ProgressMessage = JSON.parse(sse.data);
+  const data: ProgressMessageJSON = JSON.parse(sse.data);
   if (data.output_type !== "progress_message") {
     throw new Error(`Expected output_type "progress_message", got ${data.output_type}`);
   }
 
   return {
-    output_type: "progress_message",
+    outputType: "progressMessage",
     stage: data.stage,
     message: data.message,
     details: data.details,
   };
 };
 
+type StreamedTokensJSON = Omit<StreamedTokens, "outputType"> & {
+  output_type: "streamed_tokens";
+};
+
 export const mapStreamedTokensFromSSE = (sse: ServerSentEvent): StreamedTokens => {
-  const data: StreamedTokens = JSON.parse(sse.data);
+  const data: StreamedTokensJSON = JSON.parse(sse.data);
   if (data.output_type !== "streamed_tokens") {
     throw new Error(`Expected output_type "streamed_tokens", got ${data.output_type}`);
   }
 
   return {
-    output_type: "streamed_tokens",
+    outputType: "streamedTokens",
     delta: data.delta,
   };
 };
@@ -140,7 +148,7 @@ export const mapResponseFromSSE = (sse: ServerSentEvent): QueryAgentResponse => 
   const data: ApiQueryAgentResponse = JSON.parse(sse.data);
 
   const properties: ResponseProperties = {
-    output_type: "final_state",
+    outputType: "finalState",
     originalQuery: data.original_query,
     collectionNames: data.collection_names,
     searches: mapSearches(data.searches),

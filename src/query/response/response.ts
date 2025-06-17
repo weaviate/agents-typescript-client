@@ -1,5 +1,5 @@
 export type QueryAgentResponse = {
-  output_type: "final_state";
+  outputType: "finalState";
   originalQuery: string;
   collectionNames: string[];
   searches: SearchResult[][];
@@ -146,13 +146,13 @@ export type ProgressDetails = {
 };
 
 export type ProgressMessage = {
-  output_type: "progress_message";
+  outputType: "progressMessage";
   stage: string;
   message: string;
   details: ProgressDetails;
 };
 
 export type StreamedTokens = {
-  output_type: "streamed_tokens";
+  outputType: "streamedTokens";
   delta: string;
 };
