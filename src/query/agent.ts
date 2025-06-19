@@ -1,9 +1,19 @@
 import { WeaviateClient } from "weaviate-client";
-import { QueryAgentResponse, ProgressMessage, StreamedTokens } from "./response/response.js";
-import { mapResponse, mapProgressMessageFromSSE, mapStreamedTokensFromSSE, mapResponseFromSSE } from "./response/response-mapping.js";
+import {
+  QueryAgentResponse,
+  ProgressMessage,
+  StreamedTokens,
+} from "./response/response.js";
+import {
+  mapResponse,
+  mapProgressMessageFromSSE,
+  mapStreamedTokensFromSSE,
+  mapResponseFromSSE,
+} from "./response/response-mapping.js";
 import { mapApiResponse } from "./response/api-response-mapping.js";
 import { fetchServerSentEvents } from "./response/server-sent-events.js";
 import { mapCollections, QueryAgentCollectionConfig } from "./collection.js";
+import { handleError } from "./response/error.js";
 
 /**
  * An agent for executing agentic queries against Weaviate.
@@ -74,7 +84,7 @@ export class QueryAgent {
     });
 
     if (!response.ok) {
-      throw Error(`Query agent failed. ${await response.text()}`);
+      await handleError(response);
     }
 
     return mapResponse(await response.json());
@@ -100,22 +110,25 @@ export class QueryAgent {
     const { host, bearerToken, headers } =
       await this.client.getConnectionDetails();
 
-    const sseStream = fetchServerSentEvents(`${this.agentsHost}/agent/stream_query`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: bearerToken!,
-        "X-Weaviate-Cluster-Url": host,
-      },
-      body: JSON.stringify({
-        headers,
-        query,
-        collections: mapCollections(targetCollections),
-        system_prompt: this.systemPrompt,
-        previous_response: context ? mapApiResponse(context) : undefined,
-        include_progress: includeProgress ?? true,
-      }),
-    });
+    const sseStream = fetchServerSentEvents(
+      `${this.agentsHost}/agent/stream_query`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: bearerToken!,
+          "X-Weaviate-Cluster-Url": host,
+        },
+        body: JSON.stringify({
+          headers,
+          query,
+          collections: mapCollections(targetCollections),
+          system_prompt: this.systemPrompt,
+          previous_response: context ? mapApiResponse(context) : undefined,
+          include_progress: includeProgress ?? true,
+        }),
+      }
+    );
 
     for await (const event of sseStream) {
       let output: ProgressMessage | StreamedTokens | QueryAgentResponse;
