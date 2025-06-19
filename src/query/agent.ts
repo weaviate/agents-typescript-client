@@ -84,7 +84,7 @@ export class QueryAgent {
     });
 
     if (!response.ok) {
-      await handleError(response);
+      await handleError(await response.text());
     }
 
     return mapResponse(await response.json());
@@ -131,10 +131,12 @@ export class QueryAgent {
     );
 
     for await (const event of sseStream) {
-      let output: ProgressMessage | StreamedTokens | QueryAgentResponse;
       if (event.event === "error") {
-        throw new Error(`Query agent failed. ${event.data}`);
-      } else if (event.event === "progress_message") {
+        await handleError(event.data);
+      } 
+
+      let output: ProgressMessage | StreamedTokens | QueryAgentResponse;
+      if (event.event === "progress_message") {
         output = mapProgressMessageFromSSE(event);
       } else if (event.event === "streamed_tokens") {
         output = mapStreamedTokensFromSSE(event);
@@ -143,6 +145,7 @@ export class QueryAgent {
       } else {
         throw new Error(`Unexpected event type: ${event.event}: ${event.data}`);
       }
+
       yield output;
     }
   }
