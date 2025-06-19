@@ -1,5 +1,4 @@
-export const handleError = async (response: Response) => {
-  const responseText = await response.text();
+export const handleError = async (responseText: string) => {
   const json = getJson(responseText);
 
   if (json?.error) {

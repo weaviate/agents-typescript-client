@@ -84,7 +84,7 @@ export class QueryAgent {
     });
 
     if (!response.ok) {
-      await handleError(response);
+      await handleError(await response.text());
     }
 
     return mapResponse(await response.json());
@@ -131,6 +131,10 @@ export class QueryAgent {
     );
 
     for await (const event of sseStream) {
+      if (event.event === "error") {
+        await handleError(event.data);
+      } 
+
       let output: ProgressMessage | StreamedTokens | QueryAgentResponse;
       if (event.event === "progress_message") {
         output = mapProgressMessageFromSSE(event);
@@ -139,8 +143,9 @@ export class QueryAgent {
       } else if (event.event === "final_state") {
         output = mapResponseFromSSE(event);
       } else {
-        throw new Error(`Unexpected event type: ${event.event}`);
+        throw new Error(`Unexpected event type: ${event.event}: ${event.data}`);
       }
+
       yield output;
     }
   }
