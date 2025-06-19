@@ -119,14 +119,16 @@ export class QueryAgent {
 
     for await (const event of sseStream) {
       let output: ProgressMessage | StreamedTokens | QueryAgentResponse;
-      if (event.event === "progress_message") {
+      if (event.event === "error") {
+        throw new Error(`Query agent failed. ${event.data}`);
+      } else if (event.event === "progress_message") {
         output = mapProgressMessageFromSSE(event);
       } else if (event.event === "streamed_tokens") {
         output = mapStreamedTokensFromSSE(event);
       } else if (event.event === "final_state") {
         output = mapResponseFromSSE(event);
       } else {
-        throw new Error(`Unexpected event type: ${event.event}`);
+        throw new Error(`Unexpected event type: ${event.event}: ${event.data}`);
       }
       yield output;
     }
