@@ -23,7 +23,7 @@ export type ApiQueryAgentResponse = {
 
 export type ApiSearchResult = {
   collection: string;
-  queries: string[];
+  queries: (string | null)[];
   filters: ApiPropertyFilter[][];
   filter_operators: "AND" | "OR";
 };
