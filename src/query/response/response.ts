@@ -6,9 +6,6 @@ export type QueryAgentResponse = {
   aggregations: AggregationResult[][];
   usage: Usage;
   totalTime: number;
-  aggregationAnswer?: string;
-  hasAggregationAnswer: boolean;
-  hasSearchAnswer: boolean;
   isPartialAnswer: boolean;
   missingInformation: string[];
   finalAnswer: string;

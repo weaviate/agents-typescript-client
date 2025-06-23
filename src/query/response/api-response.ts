@@ -12,9 +12,6 @@ export type ApiQueryAgentResponse = {
   aggregations: ApiAggregationResult[][];
   usage: ApiUsage;
   total_time: number;
-  aggregation_answer?: string;
-  has_aggregation_answer: boolean;
-  has_search_answer: boolean;
   is_partial_answer: boolean;
   missing_information: string[];
   final_answer: string;
