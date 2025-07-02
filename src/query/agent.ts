@@ -99,7 +99,7 @@ export class QueryAgent {
    */
   async *stream(
     query: string,
-    { collections, context, includeProgress }: QueryAgentStreamOptions = {}
+    { collections, context, includeProgress, includeFinalState }: QueryAgentStreamOptions = {}
   ): AsyncGenerator<ProgressMessage | StreamedTokens | QueryAgentResponse> {
     const targetCollections = collections ?? this.collections;
 
@@ -126,6 +126,7 @@ export class QueryAgent {
           system_prompt: this.systemPrompt,
           previous_response: context ? mapApiResponse(context) : undefined,
           include_progress: includeProgress ?? true,
+          include_final_state: includeFinalState ?? true,
         }),
       }
     );
@@ -177,4 +178,6 @@ export type QueryAgentStreamOptions = {
   context?: QueryAgentResponse;
   /** Include progress messages in the stream. */
   includeProgress?: boolean;
+  /** Include final state in the stream. */
+  includeFinalState?: boolean;
 };
