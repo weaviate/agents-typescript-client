@@ -2,6 +2,7 @@ import {
   NumericMetrics,
   TextMetrics,
   BooleanMetrics,
+  DateMetrics,
   ComparisonOperator,
 } from "./response.js";
 
@@ -158,7 +159,8 @@ export type ApiAggregationResult = {
 export type ApiPropertyAggregation =
   | ApiIntegerPropertyAggregation
   | ApiTextPropertyAggregation
-  | ApiBooleanPropertyAggregation;
+  | ApiBooleanPropertyAggregation
+  | ApiDatePropertyAggregation;
 
 type ApiPropertyAggregationBase = {
   property_name: string;
@@ -175,6 +177,10 @@ export type ApiTextPropertyAggregation = ApiPropertyAggregationBase & {
 
 export type ApiBooleanPropertyAggregation = ApiPropertyAggregationBase & {
   metrics: BooleanMetrics;
+};
+
+export type ApiDatePropertyAggregation = ApiPropertyAggregationBase & {
+  metrics: DateMetrics;
 };
 
 export type ApiUsage = {

@@ -166,7 +166,8 @@ export type AggregationResult = {
 export type PropertyAggregation =
   | IntegerPropertyAggregation
   | TextPropertyAggregation
-  | BooleanPropertyAggregation;
+  | BooleanPropertyAggregation
+  | DatePropertyAggregation;
 
 type PropertyAggregationBase = {
   propertyName: string;
@@ -186,6 +187,11 @@ export type TextPropertyAggregation = PropertyAggregationBase & {
 /** Aggregate boolean properties using statistical functions */
 export type BooleanPropertyAggregation = PropertyAggregationBase & {
   metrics: BooleanMetrics;
+};
+
+/** Aggregate date properties using statistical functions */
+export type DatePropertyAggregation = PropertyAggregationBase & {
+  metrics: DateMetrics;
 };
 
 export enum NumericMetrics {
@@ -213,6 +219,15 @@ export enum BooleanMetrics {
   PercentageTrue = "PERCENTAGE_TRUE",
   PercentageFalse = "PERCENTAGE_FALSE",
 }
+
+export enum DateMetrics {
+  Count = "COUNT",
+  Maximum = "MAXIMUM",
+  Median = "MEDIAN",
+  Minimum = "MINIMUM",
+  Mode = "MODE",
+}
+
 
 export type Usage = {
   requests: number;
