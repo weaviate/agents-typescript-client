@@ -27,9 +27,13 @@ export type ApiSearchResult = {
 
 export type ApiPropertyFilter =
   | ApiIntegerPropertyFilter
+  | ApiIntegerArrayPropertyFilter
   | ApiTextPropertyFilter
+  | ApiTextArrayPropertyFilter
   | ApiBooleanPropertyFilter
+  | ApiBooleanArrayPropertyFilter
   | ApiDatePropertyFilter
+  | ApiDateArrayPropertyFilter
   | ApiGeoPropertyFilter
   | ApiIsNullPropertyFilter
   | ApiUnknownPropertyFilter;
@@ -45,16 +49,34 @@ export type ApiIntegerPropertyFilter = ApiPropertyFilterBase & {
   value: number;
 };
 
+export type ApiIntegerArrayPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "integer_array";
+  operator: ComparisonOperator;
+  value: number[];
+};
+
 export type ApiTextPropertyFilter = ApiPropertyFilterBase & {
   filter_type: "text";
   operator: ComparisonOperator;
   value: string;
 };
 
+export type ApiTextArrayPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "text_array";
+  operator: ComparisonOperator;
+  value: string[];
+};
+
 export type ApiBooleanPropertyFilter = ApiPropertyFilterBase & {
   filter_type: "boolean";
   operator: ComparisonOperator;
   value: boolean;
+};
+
+export type ApiBooleanArrayPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "boolean_array";
+  operator: ComparisonOperator;
+  value: boolean[];
 };
 
 export type ApiDateExact = {
@@ -90,6 +112,12 @@ export type ApiDatePropertyFilter = ApiPropertyFilterBase & {
   value: ApiDateFilterValue;
 };
 
+export type ApiDateArrayPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "date_array";
+  operator: ComparisonOperator;
+  value: string[];
+};
+
 export type ApiGeoPropertyFilter = ApiPropertyFilterBase & {
   filter_type: "geo";
   latitude: number;
@@ -104,9 +132,13 @@ export type ApiIsNullPropertyFilter = ApiPropertyFilterBase & {
 
 type KnownFilterTypes =
   "integer"
+  | "integer_array"
   | "text"
+  | "text_array"
   | "boolean"
+  | "boolean_array"
   | "date_range"
+  | "date_array"
   | "geo"
   | "is_null";
 

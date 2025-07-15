@@ -22,9 +22,13 @@ export type SearchResult = {
 
 export type PropertyFilter =
   | IntegerPropertyFilter
+  | IntegerArrayPropertyFilter
   | TextPropertyFilter
+  | TextArrayPropertyFilter
   | BooleanPropertyFilter
+  | BooleanArrayPropertyFilter
   | DatePropertyFilter
+  | DateArrayPropertyFilter
   | GeoPropertyFilter
   | IsNullPropertyFilter
   | UnknownPropertyFilter;
@@ -41,6 +45,13 @@ export type IntegerPropertyFilter = PropertyFilterBase & {
   value: number;
 };
 
+/** Filter numeric array properties using comparison operators */
+export type IntegerArrayPropertyFilter = PropertyFilterBase & {
+  filterType: "integerArray";
+  operator: ComparisonOperator;
+  value: number[];
+};
+
 /** Filter text properties using equality or LIKE operators */
 export type TextPropertyFilter = PropertyFilterBase & {
   filterType: "text";
@@ -48,11 +59,25 @@ export type TextPropertyFilter = PropertyFilterBase & {
   value: string;
 };
 
+/** Filter text array properties using equality or LIKE operators */
+export type TextArrayPropertyFilter = PropertyFilterBase & {
+  filterType: "textArray";
+  operator: ComparisonOperator;
+  value: string[];
+};
+
 /** Filter boolean properties using equality operators */
 export type BooleanPropertyFilter = PropertyFilterBase & {
   filterType: "boolean";
   operator: ComparisonOperator;
   value: boolean;
+};
+
+/** Filter boolean array properties using equality operators */
+export type BooleanArrayPropertyFilter = PropertyFilterBase & {
+  filterType: "booleanArray";
+  operator: ComparisonOperator;
+  value: boolean[];
 };
 
 /** Filter date properties using equality / range operators */
@@ -87,6 +112,12 @@ export type DateFilterValue =
 export type DatePropertyFilter = PropertyFilterBase & {
   filterType: "dateRange";
   value: DateFilterValue;
+};
+
+export type DateArrayPropertyFilter = PropertyFilterBase & {
+  filterType: "dateArray";
+  operator: ComparisonOperator;
+  value: string[];
 };
 
 /** Filter geo-coordinates properties. */

@@ -55,9 +55,23 @@ const mapApiPropertyFilters = (
           operator: filter.operator,
           value: filter.value,
         };
+      case "integerArray":
+        return {
+          filter_type: "integer_array",
+          property_name: filter.propertyName,
+          operator: filter.operator,
+          value: filter.value,
+        };
       case "text":
         return {
           filter_type: "text",
+          property_name: filter.propertyName,
+          operator: filter.operator,
+          value: filter.value,
+        };
+      case "textArray":
+        return {
+          filter_type: "text_array",
           property_name: filter.propertyName,
           operator: filter.operator,
           value: filter.value,
@@ -69,10 +83,24 @@ const mapApiPropertyFilters = (
           operator: filter.operator,
           value: filter.value,
         };
+      case "booleanArray":
+        return {
+          filter_type: "boolean_array",
+          property_name: filter.propertyName,
+          operator: filter.operator,
+          value: filter.value,
+        };
       case "dateRange":
         return {
           filter_type: "date_range",
           property_name: filter.propertyName,
+          value: filter.value,
+        };
+      case "dateArray":
+        return {
+          filter_type: "date_array",
+          property_name: filter.propertyName,
+          operator: filter.operator,
           value: filter.value,
         };
       case "geo":

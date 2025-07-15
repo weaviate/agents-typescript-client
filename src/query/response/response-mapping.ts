@@ -21,9 +21,13 @@ import {
   ApiSource,
   ApiDateFilterValue,
   ApiIntegerPropertyFilter,
+  ApiIntegerArrayPropertyFilter,
   ApiTextPropertyFilter,
+  ApiTextArrayPropertyFilter,
   ApiBooleanPropertyFilter,
+  ApiBooleanArrayPropertyFilter,
   ApiDatePropertyFilter,
+  ApiDateArrayPropertyFilter,
   ApiGeoPropertyFilter,
   ApiIsNullPropertyFilter,
   ApiUnknownPropertyFilter,
@@ -110,6 +114,15 @@ const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
           value: intFilter.value,
         };
       }
+      case "integer_array": {
+        const intArrayFilter = filter as ApiIntegerArrayPropertyFilter;
+        return {
+          filterType: "integerArray",
+          propertyName: intArrayFilter.property_name,
+          operator: intArrayFilter.operator,
+          value: intArrayFilter.value,
+        };
+      }
       case "text": {
         const textFilter = filter as ApiTextPropertyFilter;
         return {
@@ -119,6 +132,15 @@ const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
           value: textFilter.value,
         };
       }
+      case "text_array": {
+        const textArrayFilter = filter as ApiTextArrayPropertyFilter;
+        return {
+          filterType: "textArray",
+          propertyName: textArrayFilter.property_name,
+          operator: textArrayFilter.operator,
+          value: textArrayFilter.value,
+        };
+      }
       case "boolean": {
         const boolFilter = filter as ApiBooleanPropertyFilter;
         return {
@@ -126,6 +148,15 @@ const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
           propertyName: boolFilter.property_name,
           operator: boolFilter.operator,
           value: boolFilter.value,
+        };
+      }
+      case "boolean_array": {
+        const boolArrayFilter = filter as ApiBooleanArrayPropertyFilter;
+        return {
+          filterType: "booleanArray",
+          propertyName: boolArrayFilter.property_name,
+          operator: boolArrayFilter.operator,
+          value: boolArrayFilter.value,
         };
       }
       case "date_range": {
@@ -142,6 +173,15 @@ const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
           filterType: "dateRange",
           propertyName: dateFilter.property_name,
           value: value,
+        };
+      }
+      case "date_array": {
+        const dateArrayFilter = filter as ApiDateArrayPropertyFilter;
+        return {
+          filterType: "dateArray",
+          propertyName: dateArrayFilter.property_name,
+          operator: dateArrayFilter.operator,
+          value: dateArrayFilter.value,
         };
       }
       case "geo": {
