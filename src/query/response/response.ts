@@ -23,26 +23,89 @@ export type SearchResult = {
 export type PropertyFilter =
   | IntegerPropertyFilter
   | TextPropertyFilter
-  | BooleanPropertyFilter;
+  | BooleanPropertyFilter
+  | DatePropertyFilter
+  | GeoPropertyFilter
+  | IsNullPropertyFilter
+  | UnknownPropertyFilter;
 
 type PropertyFilterBase = {
+  filterType: string;
   propertyName: string;
-  operator: ComparisonOperator;
 };
 
 /** Filter numeric properties using comparison operators */
 export type IntegerPropertyFilter = PropertyFilterBase & {
+  filterType: "integer";
+  operator: ComparisonOperator;
   value: number;
 };
 
 /** Filter text properties using equality or LIKE operators */
 export type TextPropertyFilter = PropertyFilterBase & {
+  filterType: "text";
+  operator: ComparisonOperator;
   value: string;
 };
 
 /** Filter boolean properties using equality operators */
 export type BooleanPropertyFilter = PropertyFilterBase & {
+  filterType: "boolean";
+  operator: ComparisonOperator;
   value: boolean;
+};
+
+/** Filter date properties using equality / range operators */
+export type DateExact = {
+  exactTimestamp: string;
+  operator: ComparisonOperator;
+};
+
+export type DateRangeFrom = {
+  dateFrom: string;
+  inclusiveFrom: boolean;
+};
+
+export type DateRangeTo = {
+  dateTo: string;
+  inclusiveTo: boolean;  
+};
+
+export type DateRangeBetween = {
+  dateFrom: string;
+  dateTo: string;
+  inclusiveFrom: boolean;
+  inclusiveTo: boolean;
+};
+
+export type DateFilterValue =
+  DateExact
+  | DateRangeFrom
+  | DateRangeTo
+  | DateRangeBetween;
+
+export type DatePropertyFilter = PropertyFilterBase & {
+  filterType: "dateRange";
+  value: DateFilterValue;
+};
+
+/** Filter geo-coordinates properties. */
+export type GeoPropertyFilter = PropertyFilterBase & {
+  filterType: "geo";
+  latitude: number;
+  longitude: number;
+  maxDistanceMeters: number;
+};
+
+/** Filter properties by their null state. */
+export type IsNullPropertyFilter = PropertyFilterBase & {
+  filterType: "isNull";
+  isNull: boolean;
+};
+
+export type UnknownPropertyFilter = PropertyFilterBase & {
+  filterType: "unknown";
+  value?: any;
 };
 
 export enum ComparisonOperator {

@@ -8,6 +8,7 @@ import {
   Source,
   StreamedTokens,
   ProgressMessage,
+  DateFilterValue,
 } from "./response.js";
 
 import {
@@ -18,6 +19,14 @@ import {
   ApiPropertyAggregation,
   ApiUsage,
   ApiSource,
+  ApiDateFilterValue,
+  ApiIntegerPropertyFilter,
+  ApiTextPropertyFilter,
+  ApiBooleanPropertyFilter,
+  ApiDatePropertyFilter,
+  ApiGeoPropertyFilter,
+  ApiIsNullPropertyFilter,
+  ApiUnknownPropertyFilter,
 } from "./api-response.js";
 
 import { ServerSentEvent } from "./server-sent-events.js";
@@ -55,12 +64,114 @@ const mapSearches = (searches: ApiSearchResult[][]): SearchResult[][] =>
     }))
   );
 
+
+
+const mapDatePropertyFilter = (filterValue: ApiDateFilterValue): DateFilterValue | undefined => {
+  if ("exact_timestamp" in filterValue) {
+    return {
+      exactTimestamp: filterValue.exact_timestamp,
+      operator: filterValue.operator,
+    };
+  } else if (
+    "date_from" in filterValue
+    && "date_to" in filterValue
+    && filterValue.date_from != null
+    && filterValue.date_to != null
+  ) {
+    return {
+      dateFrom: filterValue.date_from,
+      dateTo: filterValue.date_to,
+      inclusiveFrom: filterValue.inclusive_from,
+      inclusiveTo: filterValue.inclusive_to,
+    };
+  } else if ("date_from" in filterValue && filterValue.date_from != null) {
+    return {
+      dateFrom: filterValue.date_from,
+      inclusiveFrom: filterValue.inclusive_from,
+    };
+  } else if ("date_to" in filterValue && filterValue.date_to != null) {
+    return {
+      dateTo: filterValue.date_to,
+      inclusiveTo: filterValue.inclusive_to,
+    };
+  }
+  return undefined;
+}
+
 const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
-  filters.map((filter) => ({
-    propertyName: filter.property_name,
-    operator: filter.operator,
-    value: filter.value,
-  }));
+  filters.map((filter) => {
+    switch (filter.filter_type) {
+      case "integer": {
+        const intFilter = filter as ApiIntegerPropertyFilter;
+        return {
+          filterType: "integer",
+          propertyName: intFilter.property_name,
+          operator: intFilter.operator,
+          value: intFilter.value,
+        };
+      }
+      case "text": {
+        const textFilter = filter as ApiTextPropertyFilter;
+        return {
+          filterType: "text",
+          propertyName: textFilter.property_name,
+          operator: textFilter.operator,
+          value: textFilter.value,
+        };
+      }
+      case "boolean": {
+        const boolFilter = filter as ApiBooleanPropertyFilter;
+        return {
+          filterType: "boolean",
+          propertyName: boolFilter.property_name,
+          operator: boolFilter.operator,
+          value: boolFilter.value,
+        };
+      }
+      case "date_range": {
+        const dateFilter = filter as ApiDatePropertyFilter;
+        const value = mapDatePropertyFilter(dateFilter.value);
+        if (!value) {
+          return {
+            filterType: "unknown",
+            propertyName: dateFilter.property_name,
+            value: dateFilter.value,
+          };
+        }
+        return {
+          filterType: "dateRange",
+          propertyName: dateFilter.property_name,
+          value: value,
+        };
+      }
+      case "geo": {
+        const geoFilter = filter as ApiGeoPropertyFilter;
+        return {
+          filterType: "geo",
+          propertyName: geoFilter.property_name,
+          latitude: geoFilter.latitude,
+          longitude: geoFilter.longitude,
+          maxDistanceMeters: geoFilter.max_distance_meters,
+        };
+      }
+      case "is_null": {
+        const nullFilter = filter as ApiIsNullPropertyFilter;
+        return {
+          filterType: "isNull",
+          propertyName: nullFilter.property_name,
+          isNull: nullFilter.is_null,
+        };
+      }
+      default: {
+        const unknownFilter = filter as ApiUnknownPropertyFilter;
+        return {
+          filterType: "unknown",
+          propertyName: unknownFilter.property_name,
+          value: unknownFilter.value,
+        };
+      }
+    }
+  });
 
 const mapAggregations = (
   aggregations: ApiAggregationResult[][]

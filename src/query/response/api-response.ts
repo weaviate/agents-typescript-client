@@ -28,23 +28,91 @@ export type ApiSearchResult = {
 export type ApiPropertyFilter =
   | ApiIntegerPropertyFilter
   | ApiTextPropertyFilter
-  | ApiBooleanPropertyFilter;
+  | ApiBooleanPropertyFilter
+  | ApiDatePropertyFilter
+  | ApiGeoPropertyFilter
+  | ApiIsNullPropertyFilter
+  | ApiUnknownPropertyFilter;
 
 type ApiPropertyFilterBase = {
+  filter_type: string;
   property_name: string;
-  operator: ComparisonOperator;
 };
 
 export type ApiIntegerPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "integer";
+  operator: ComparisonOperator;
   value: number;
 };
 
 export type ApiTextPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "text";
+  operator: ComparisonOperator;
   value: string;
 };
 
 export type ApiBooleanPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "boolean";
+  operator: ComparisonOperator;
   value: boolean;
+};
+
+export type ApiDateExact = {
+  exact_timestamp: string;
+  operator: ComparisonOperator;
+};
+
+export type ApiDateRangeFrom = {
+  date_from: string;
+  inclusive_from: boolean;
+};
+
+export type ApiDateRangeTo = {
+  date_to: string;
+  inclusive_to: boolean;  
+};
+
+export type ApiDateRangeBetween = {
+  date_from: string;
+  date_to: string;
+  inclusive_from: boolean;
+  inclusive_to: boolean;
+};
+
+export type ApiDateFilterValue =
+  ApiDateExact
+  | ApiDateRangeFrom
+  | ApiDateRangeTo
+  | ApiDateRangeBetween;
+
+export type ApiDatePropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "date_range";
+  value: ApiDateFilterValue;
+};
+
+export type ApiGeoPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "geo";
+  latitude: number;
+  longitude: number;
+  max_distance_meters: number;
+};
+
+export type ApiIsNullPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "is_null";
+  is_null: boolean;
+};
+
+type KnownFilterTypes =
+  "integer"
+  | "text"
+  | "boolean"
+  | "date_range"
+  | "geo"
+  | "is_null";
+
+export type ApiUnknownPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: Exclude<string, KnownFilterTypes>;
+  value?: any;
 };
 
 export type ApiAggregationResult = {
