@@ -20,17 +20,6 @@ import {
   ApiUsage,
   ApiSource,
   ApiDateFilterValue,
-  ApiIntegerPropertyFilter,
-  ApiIntegerArrayPropertyFilter,
-  ApiTextPropertyFilter,
-  ApiTextArrayPropertyFilter,
-  ApiBooleanPropertyFilter,
-  ApiBooleanArrayPropertyFilter,
-  ApiDatePropertyFilter,
-  ApiDateArrayPropertyFilter,
-  ApiGeoPropertyFilter,
-  ApiIsNullPropertyFilter,
-  ApiUnknownPropertyFilter,
 } from "./api-response.js";
 
 import { ServerSentEvent } from "./server-sent-events.js";
@@ -105,113 +94,99 @@ const mapDatePropertyFilter = (filterValue: ApiDateFilterValue): DateFilterValue
 const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
   filters.map((filter) => {
     switch (filter.filter_type) {
-      case "integer": {
-        const intFilter = filter as ApiIntegerPropertyFilter;
+      case "integer":
         return {
           filterType: "integer",
-          propertyName: intFilter.property_name,
-          operator: intFilter.operator,
-          value: intFilter.value,
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
         };
-      }
-      case "integer_array": {
-        const intArrayFilter = filter as ApiIntegerArrayPropertyFilter;
+
+      case "integer_array":
         return {
           filterType: "integerArray",
-          propertyName: intArrayFilter.property_name,
-          operator: intArrayFilter.operator,
-          value: intArrayFilter.value,
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
         };
-      }
-      case "text": {
-        const textFilter = filter as ApiTextPropertyFilter;
+
+      case "text":
         return {
           filterType: "text",
-          propertyName: textFilter.property_name,
-          operator: textFilter.operator,
-          value: textFilter.value,
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
         };
-      }
-      case "text_array": {
-        const textArrayFilter = filter as ApiTextArrayPropertyFilter;
+
+      case "text_array":
         return {
           filterType: "textArray",
-          propertyName: textArrayFilter.property_name,
-          operator: textArrayFilter.operator,
-          value: textArrayFilter.value,
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
         };
-      }
-      case "boolean": {
-        const boolFilter = filter as ApiBooleanPropertyFilter;
+
+      case "boolean":
         return {
           filterType: "boolean",
-          propertyName: boolFilter.property_name,
-          operator: boolFilter.operator,
-          value: boolFilter.value,
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
         };
-      }
-      case "boolean_array": {
-        const boolArrayFilter = filter as ApiBooleanArrayPropertyFilter;
-        return {
+
+      case "boolean_array":
+          return {
           filterType: "booleanArray",
-          propertyName: boolArrayFilter.property_name,
-          operator: boolArrayFilter.operator,
-          value: boolArrayFilter.value,
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
         };
-      }
-      case "date_range": {
-        const dateFilter = filter as ApiDatePropertyFilter;
-        const value = mapDatePropertyFilter(dateFilter.value);
+
+      case "date_range":
+        const value = mapDatePropertyFilter(filter.value);
         if (!value) {
           return {
             filterType: "unknown",
-            propertyName: dateFilter.property_name,
-            value: dateFilter.value,
+            propertyName: (filter as ApiPropertyFilter).property_name,
           };
         }
         return {
           filterType: "dateRange",
-          propertyName: dateFilter.property_name,
-          value: value,
+          propertyName: filter.property_name,
+          value,
         };
-      }
-      case "date_array": {
-        const dateArrayFilter = filter as ApiDateArrayPropertyFilter;
+
+      case "date_array":
         return {
           filterType: "dateArray",
-          propertyName: dateArrayFilter.property_name,
-          operator: dateArrayFilter.operator,
-          value: dateArrayFilter.value,
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
         };
-      }
-      case "geo": {
-        const geoFilter = filter as ApiGeoPropertyFilter;
+
+      case "geo":
         return {
           filterType: "geo",
-          propertyName: geoFilter.property_name,
-          latitude: geoFilter.latitude,
-          longitude: geoFilter.longitude,
-          maxDistanceMeters: geoFilter.max_distance_meters,
+          propertyName: filter.property_name,
+          latitude: filter.latitude,
+          longitude: filter.longitude,
+          maxDistanceMeters: filter.max_distance_meters,
         };
-      }
-      case "is_null": {
-        const nullFilter = filter as ApiIsNullPropertyFilter;
+
+      case "is_null":
         return {
           filterType: "isNull",
-          propertyName: nullFilter.property_name,
-          isNull: nullFilter.is_null,
+          propertyName: filter.property_name,
+          isNull: filter.is_null,
         };
-      }
-      default: {
-        const unknownFilter = filter as ApiUnknownPropertyFilter;
+
+      default:
         return {
           filterType: "unknown",
-          propertyName: unknownFilter.property_name,
-          value: unknownFilter.value,
+          propertyName: (filter as ApiPropertyFilter).property_name,
         };
-      }
     }
-  });
+  })
 
 const mapAggregations = (
   aggregations: ApiAggregationResult[][]

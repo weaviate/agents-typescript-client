@@ -136,7 +136,6 @@ export type IsNullPropertyFilter = PropertyFilterBase & {
 
 export type UnknownPropertyFilter = PropertyFilterBase & {
   filterType: "unknown";
-  value?: any;
 };
 
 export enum ComparisonOperator {

@@ -6,6 +6,7 @@ import {
   SearchResult,
   Source,
   Usage,
+  DateFilterValue,
 } from "./response.js";
 
 import {
@@ -16,6 +17,7 @@ import {
   ApiSearchResult,
   ApiSource,
   ApiUsage,
+  ApiDateFilterValue,
 } from "./api-response.js";
 
 export const mapApiResponse = (
@@ -42,6 +44,40 @@ const mapApiSearches = (searches: SearchResult[][]): ApiSearchResult[][] =>
       filter_operators: result.filterOperators,
     }))
   );
+
+const mapDateFilterValue = (value: DateFilterValue): ApiDateFilterValue | undefined => {
+  if ("exactTimestamp" in value) {
+    return {
+      exact_timestamp: value.exactTimestamp,
+      operator: value.operator,
+    };
+  } else if (
+    "dateFrom" in value
+    && "dateTo" in value
+    && value.dateFrom != null
+    && value.dateTo != null
+  ) {
+    return {
+      date_from: value.dateFrom,
+      date_to: value.dateTo,
+      inclusive_from: value.inclusiveFrom,
+      inclusive_to: value.inclusiveTo,
+    };
+  } else if ("dateFrom" in value && value.dateFrom != null) {
+    return {
+      date_from: value.dateFrom,
+      inclusive_from: value.inclusiveFrom,
+    };
+  } else if ("dateTo" in value && value.dateTo != null) {
+    return {
+      date_to: value.dateTo,
+      inclusive_to: value.inclusiveTo,
+    };
+  }
+  else {
+    return undefined
+  }
+};
 
 const mapApiPropertyFilters = (
   filters: PropertyFilter[]
@@ -91,10 +127,14 @@ const mapApiPropertyFilters = (
           value: filter.value,
         };
       case "dateRange":
+        const value = mapDateFilterValue(filter.value);
+        if (!value) {
+          return undefined;
+        }
         return {
           filter_type: "date_range",
           property_name: filter.propertyName,
-          value: filter.value,
+          value,
         };
       case "dateArray":
         return {
@@ -117,15 +157,10 @@ const mapApiPropertyFilters = (
           property_name: filter.propertyName,
           is_null: filter.isNull,
         };
-      case "unknown":
       default:
-        return {
-          filter_type: "unknown",
-          property_name: filter.propertyName,
-          value: filter.value,
-        };
+        return undefined
     }
-  });
+  }).filter((filter): filter is ApiPropertyFilter => filter !== undefined);
 
 const mapApiAggregations = (
   aggregations: AggregationResult[][]

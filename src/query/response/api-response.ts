@@ -36,8 +36,7 @@ export type ApiPropertyFilter =
   | ApiDatePropertyFilter
   | ApiDateArrayPropertyFilter
   | ApiGeoPropertyFilter
-  | ApiIsNullPropertyFilter
-  | ApiUnknownPropertyFilter;
+  | ApiIsNullPropertyFilter;
 
 type ApiPropertyFilterBase = {
   filter_type: string;
@@ -131,22 +130,6 @@ export type ApiIsNullPropertyFilter = ApiPropertyFilterBase & {
   is_null: boolean;
 };
 
-type KnownFilterTypes =
-  "integer"
-  | "integer_array"
-  | "text"
-  | "text_array"
-  | "boolean"
-  | "boolean_array"
-  | "date_range"
-  | "date_array"
-  | "geo"
-  | "is_null";
-
-export type ApiUnknownPropertyFilter = ApiPropertyFilterBase & {
-  filter_type: Exclude<string, KnownFilterTypes>;
-  value?: any;
-};
 
 export type ApiAggregationResult = {
   collection: string;
