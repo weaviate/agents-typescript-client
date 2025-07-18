@@ -22,27 +22,120 @@ export type SearchResult = {
 
 export type PropertyFilter =
   | IntegerPropertyFilter
+  | IntegerArrayPropertyFilter
   | TextPropertyFilter
-  | BooleanPropertyFilter;
+  | TextArrayPropertyFilter
+  | BooleanPropertyFilter
+  | BooleanArrayPropertyFilter
+  | DatePropertyFilter
+  | DateArrayPropertyFilter
+  | GeoPropertyFilter
+  | IsNullPropertyFilter
+  | UnknownPropertyFilter;
 
 type PropertyFilterBase = {
+  filterType: string;
   propertyName: string;
-  operator: ComparisonOperator;
 };
 
 /** Filter numeric properties using comparison operators */
 export type IntegerPropertyFilter = PropertyFilterBase & {
+  filterType: "integer";
+  operator: ComparisonOperator;
   value: number;
+};
+
+/** Filter numeric array properties using comparison operators */
+export type IntegerArrayPropertyFilter = PropertyFilterBase & {
+  filterType: "integerArray";
+  operator: ComparisonOperator;
+  value: number[];
 };
 
 /** Filter text properties using equality or LIKE operators */
 export type TextPropertyFilter = PropertyFilterBase & {
+  filterType: "text";
+  operator: ComparisonOperator;
   value: string;
+};
+
+/** Filter text array properties using equality or LIKE operators */
+export type TextArrayPropertyFilter = PropertyFilterBase & {
+  filterType: "textArray";
+  operator: ComparisonOperator;
+  value: string[];
 };
 
 /** Filter boolean properties using equality operators */
 export type BooleanPropertyFilter = PropertyFilterBase & {
+  filterType: "boolean";
+  operator: ComparisonOperator;
   value: boolean;
+};
+
+/** Filter boolean array properties using equality operators */
+export type BooleanArrayPropertyFilter = PropertyFilterBase & {
+  filterType: "booleanArray";
+  operator: ComparisonOperator;
+  value: boolean[];
+};
+
+/** Filter date properties using equality / range operators */
+export type DateExact = {
+  exactTimestamp: string;
+  operator: ComparisonOperator;
+};
+
+export type DateRangeFrom = {
+  dateFrom: string;
+  inclusiveFrom: boolean;
+};
+
+export type DateRangeTo = {
+  dateTo: string;
+  inclusiveTo: boolean;  
+};
+
+export type DateRangeBetween = {
+  dateFrom: string;
+  dateTo: string;
+  inclusiveFrom: boolean;
+  inclusiveTo: boolean;
+};
+
+export type DateFilterValue =
+  DateExact
+  | DateRangeFrom
+  | DateRangeTo
+  | DateRangeBetween;
+
+export type DatePropertyFilter = PropertyFilterBase & {
+  filterType: "dateRange";
+  value: DateFilterValue;
+};
+
+export type DateArrayPropertyFilter = PropertyFilterBase & {
+  filterType: "dateArray";
+  operator: ComparisonOperator;
+  value: string[];
+};
+
+/** Filter geo-coordinates properties. */
+export type GeoPropertyFilter = PropertyFilterBase & {
+  filterType: "geo";
+  latitude: number;
+  longitude: number;
+  maxDistanceMeters: number;
+};
+
+/** Filter properties by their null state. */
+export type IsNullPropertyFilter = PropertyFilterBase & {
+  filterType: "isNull";
+  isNull: boolean;
+};
+
+export type UnknownPropertyFilter = PropertyFilterBase & {
+  filterType: "unknown";
 };
 
 export enum ComparisonOperator {
@@ -72,7 +165,8 @@ export type AggregationResult = {
 export type PropertyAggregation =
   | IntegerPropertyAggregation
   | TextPropertyAggregation
-  | BooleanPropertyAggregation;
+  | BooleanPropertyAggregation
+  | DatePropertyAggregation;
 
 type PropertyAggregationBase = {
   propertyName: string;
@@ -92,6 +186,11 @@ export type TextPropertyAggregation = PropertyAggregationBase & {
 /** Aggregate boolean properties using statistical functions */
 export type BooleanPropertyAggregation = PropertyAggregationBase & {
   metrics: BooleanMetrics;
+};
+
+/** Aggregate date properties using statistical functions */
+export type DatePropertyAggregation = PropertyAggregationBase & {
+  metrics: DateMetrics;
 };
 
 export enum NumericMetrics {
@@ -119,6 +218,15 @@ export enum BooleanMetrics {
   PercentageTrue = "PERCENTAGE_TRUE",
   PercentageFalse = "PERCENTAGE_FALSE",
 }
+
+export enum DateMetrics {
+  Count = "COUNT",
+  Maximum = "MAXIMUM",
+  Median = "MEDIAN",
+  Minimum = "MINIMUM",
+  Mode = "MODE",
+}
+
 
 export type Usage = {
   requests: number;

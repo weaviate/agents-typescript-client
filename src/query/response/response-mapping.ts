@@ -8,6 +8,7 @@ import {
   Source,
   StreamedTokens,
   ProgressMessage,
+  DateFilterValue,
 } from "./response.js";
 
 import {
@@ -18,6 +19,7 @@ import {
   ApiPropertyAggregation,
   ApiUsage,
   ApiSource,
+  ApiDateFilterValue,
 } from "./api-response.js";
 
 import { ServerSentEvent } from "./server-sent-events.js";
@@ -55,12 +57,136 @@ const mapSearches = (searches: ApiSearchResult[][]): SearchResult[][] =>
     }))
   );
 
+
+
+const mapDatePropertyFilter = (filterValue: ApiDateFilterValue): DateFilterValue | undefined => {
+  if ("exact_timestamp" in filterValue) {
+    return {
+      exactTimestamp: filterValue.exact_timestamp,
+      operator: filterValue.operator,
+    };
+  } else if (
+    "date_from" in filterValue
+    && "date_to" in filterValue
+    && filterValue.date_from != null
+    && filterValue.date_to != null
+  ) {
+    return {
+      dateFrom: filterValue.date_from,
+      dateTo: filterValue.date_to,
+      inclusiveFrom: filterValue.inclusive_from,
+      inclusiveTo: filterValue.inclusive_to,
+    };
+  } else if ("date_from" in filterValue && filterValue.date_from != null) {
+    return {
+      dateFrom: filterValue.date_from,
+      inclusiveFrom: filterValue.inclusive_from,
+    };
+  } else if ("date_to" in filterValue && filterValue.date_to != null) {
+    return {
+      dateTo: filterValue.date_to,
+      inclusiveTo: filterValue.inclusive_to,
+    };
+  }
+  return undefined;
+}
+
 const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
-  filters.map((filter) => ({
-    propertyName: filter.property_name,
-    operator: filter.operator,
-    value: filter.value,
-  }));
+  filters.map((filter) => {
+    switch (filter.filter_type) {
+      case "integer":
+        return {
+          filterType: "integer",
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
+        };
+
+      case "integer_array":
+        return {
+          filterType: "integerArray",
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
+        };
+
+      case "text":
+        return {
+          filterType: "text",
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
+        };
+
+      case "text_array":
+        return {
+          filterType: "textArray",
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
+        };
+
+      case "boolean":
+        return {
+          filterType: "boolean",
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
+        };
+
+      case "boolean_array":
+          return {
+          filterType: "booleanArray",
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
+        };
+
+      case "date_range":
+        const value = mapDatePropertyFilter(filter.value);
+        if (!value) {
+          return {
+            filterType: "unknown",
+            propertyName: (filter as ApiPropertyFilter).property_name,
+          };
+        }
+        return {
+          filterType: "dateRange",
+          propertyName: filter.property_name,
+          value,
+        };
+
+      case "date_array":
+        return {
+          filterType: "dateArray",
+          propertyName: filter.property_name,
+          operator: filter.operator,
+          value: filter.value,
+        };
+
+      case "geo":
+        return {
+          filterType: "geo",
+          propertyName: filter.property_name,
+          latitude: filter.latitude,
+          longitude: filter.longitude,
+          maxDistanceMeters: filter.max_distance_meters,
+        };
+
+      case "is_null":
+        return {
+          filterType: "isNull",
+          propertyName: filter.property_name,
+          isNull: filter.is_null,
+        };
+
+      default:
+        return {
+          filterType: "unknown",
+          propertyName: (filter as ApiPropertyFilter).property_name,
+        };
+    }
+  })
 
 const mapAggregations = (
   aggregations: ApiAggregationResult[][]

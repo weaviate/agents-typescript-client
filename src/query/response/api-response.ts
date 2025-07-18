@@ -2,6 +2,7 @@ import {
   NumericMetrics,
   TextMetrics,
   BooleanMetrics,
+  DateMetrics,
   ComparisonOperator,
 } from "./response.js";
 
@@ -27,25 +28,108 @@ export type ApiSearchResult = {
 
 export type ApiPropertyFilter =
   | ApiIntegerPropertyFilter
+  | ApiIntegerArrayPropertyFilter
   | ApiTextPropertyFilter
-  | ApiBooleanPropertyFilter;
+  | ApiTextArrayPropertyFilter
+  | ApiBooleanPropertyFilter
+  | ApiBooleanArrayPropertyFilter
+  | ApiDatePropertyFilter
+  | ApiDateArrayPropertyFilter
+  | ApiGeoPropertyFilter
+  | ApiIsNullPropertyFilter;
 
 type ApiPropertyFilterBase = {
+  filter_type: string;
   property_name: string;
-  operator: ComparisonOperator;
 };
 
 export type ApiIntegerPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "integer";
+  operator: ComparisonOperator;
   value: number;
 };
 
+export type ApiIntegerArrayPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "integer_array";
+  operator: ComparisonOperator;
+  value: number[];
+};
+
 export type ApiTextPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "text";
+  operator: ComparisonOperator;
   value: string;
 };
 
+export type ApiTextArrayPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "text_array";
+  operator: ComparisonOperator;
+  value: string[];
+};
+
 export type ApiBooleanPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "boolean";
+  operator: ComparisonOperator;
   value: boolean;
 };
+
+export type ApiBooleanArrayPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "boolean_array";
+  operator: ComparisonOperator;
+  value: boolean[];
+};
+
+export type ApiDateExact = {
+  exact_timestamp: string;
+  operator: ComparisonOperator;
+};
+
+export type ApiDateRangeFrom = {
+  date_from: string;
+  inclusive_from: boolean;
+};
+
+export type ApiDateRangeTo = {
+  date_to: string;
+  inclusive_to: boolean;  
+};
+
+export type ApiDateRangeBetween = {
+  date_from: string;
+  date_to: string;
+  inclusive_from: boolean;
+  inclusive_to: boolean;
+};
+
+export type ApiDateFilterValue =
+  ApiDateExact
+  | ApiDateRangeFrom
+  | ApiDateRangeTo
+  | ApiDateRangeBetween;
+
+export type ApiDatePropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "date_range";
+  value: ApiDateFilterValue;
+};
+
+export type ApiDateArrayPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "date_array";
+  operator: ComparisonOperator;
+  value: string[];
+};
+
+export type ApiGeoPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "geo";
+  latitude: number;
+  longitude: number;
+  max_distance_meters: number;
+};
+
+export type ApiIsNullPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "is_null";
+  is_null: boolean;
+};
+
 
 export type ApiAggregationResult = {
   collection: string;
@@ -58,7 +142,8 @@ export type ApiAggregationResult = {
 export type ApiPropertyAggregation =
   | ApiIntegerPropertyAggregation
   | ApiTextPropertyAggregation
-  | ApiBooleanPropertyAggregation;
+  | ApiBooleanPropertyAggregation
+  | ApiDatePropertyAggregation;
 
 type ApiPropertyAggregationBase = {
   property_name: string;
@@ -75,6 +160,10 @@ export type ApiTextPropertyAggregation = ApiPropertyAggregationBase & {
 
 export type ApiBooleanPropertyAggregation = ApiPropertyAggregationBase & {
   metrics: BooleanMetrics;
+};
+
+export type ApiDatePropertyAggregation = ApiPropertyAggregationBase & {
+  metrics: DateMetrics;
 };
 
 export type ApiUsage = {
