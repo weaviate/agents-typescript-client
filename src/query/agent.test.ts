@@ -47,7 +47,7 @@ it("runs the query agent", async () => {
             },
           ],
         }),
-    })
+    }),
   ) as jest.Mock;
 
   const agent = new QueryAgent(mockClient, {

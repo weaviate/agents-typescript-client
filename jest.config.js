@@ -4,7 +4,7 @@ import { createDefaultPreset } from "ts-jest";
 export default {
   ...createDefaultPreset(),
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
+    "^(\\.{1,2}/.*)\\.js$": "$1",
   },
-  testPathIgnorePatterns: ["dist"]
+  testPathIgnorePatterns: ["dist"],
 };

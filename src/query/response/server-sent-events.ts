@@ -3,10 +3,9 @@ export type ServerSentEvent = {
   data: string;
 };
 
-
 /**
  * Fetch Server-Sent Events (SSE) from a URL.
- * 
+ *
  * All fields other than "event" and "data" are ignored
  *
  * @param input - The URL to fetch the SSE from.
@@ -15,14 +14,14 @@ export type ServerSentEvent = {
  */
 export async function* fetchServerSentEvents(
   input: string | URL | globalThis.Request,
-  init?: RequestInit
+  init?: RequestInit,
 ): AsyncGenerator<ServerSentEvent> {
   const response = await fetch(input, {
     ...init,
     headers: {
       ...init?.headers,
-      "Accept": "text/event-stream",
-    }
+      Accept: "text/event-stream",
+    },
   });
 
   if (!response.ok || !response.body) {
@@ -56,7 +55,10 @@ export async function* fetchServerSentEvents(
   }
 }
 
-function parseServerSentEvents(buffer: string, flush?: boolean): { events: ServerSentEvent[]; remainingBuffer: string } {
+function parseServerSentEvents(
+  buffer: string,
+  flush?: boolean,
+): { events: ServerSentEvent[]; remainingBuffer: string } {
   // Server sent events are delimited by blank lines,
   // and may be spread across multiple chunks from the API
   const sseChunks = buffer.split(/\r?\n\r?\n/);

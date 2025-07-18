@@ -41,7 +41,7 @@ export class QueryAgent {
       collections,
       systemPrompt,
       agentsHost = "https://api.agents.weaviate.io",
-    }: QueryAgentOptions = {}
+    }: QueryAgentOptions = {},
   ) {
     this.collections = collections;
     this.systemPrompt = systemPrompt;
@@ -57,7 +57,7 @@ export class QueryAgent {
    */
   async run(
     query: string,
-    { collections, context }: QueryAgentRunOptions = {}
+    { collections, context }: QueryAgentRunOptions = {},
   ): Promise<QueryAgentResponse> {
     const targetCollections = collections ?? this.collections;
     if (!targetCollections) {
@@ -100,23 +100,40 @@ export class QueryAgent {
    */
   stream(
     query: string,
-    options: QueryAgentStreamOptions & { includeProgress: false; includeFinalState: false }
+    options: QueryAgentStreamOptions & {
+      includeProgress: false;
+      includeFinalState: false;
+    },
   ): AsyncGenerator<StreamedTokens>;
   stream(
     query: string,
-    options: QueryAgentStreamOptions & { includeProgress: false; includeFinalState?: true }
+    options: QueryAgentStreamOptions & {
+      includeProgress: false;
+      includeFinalState?: true;
+    },
   ): AsyncGenerator<StreamedTokens | QueryAgentResponse>;
   stream(
     query: string,
-    options: QueryAgentStreamOptions & { includeProgress?: true; includeFinalState: false }
+    options: QueryAgentStreamOptions & {
+      includeProgress?: true;
+      includeFinalState: false;
+    },
   ): AsyncGenerator<ProgressMessage | StreamedTokens>;
   stream(
     query: string,
-    options?: QueryAgentStreamOptions & { includeProgress?: true; includeFinalState?: true }
+    options?: QueryAgentStreamOptions & {
+      includeProgress?: true;
+      includeFinalState?: true;
+    },
   ): AsyncGenerator<ProgressMessage | StreamedTokens | QueryAgentResponse>;
   async *stream(
     query: string,
-    { collections, context, includeProgress, includeFinalState }: QueryAgentStreamOptions = {}
+    {
+      collections,
+      context,
+      includeProgress,
+      includeFinalState,
+    }: QueryAgentStreamOptions = {},
   ): AsyncGenerator<ProgressMessage | StreamedTokens | QueryAgentResponse> {
     const targetCollections = collections ?? this.collections;
 
@@ -146,13 +163,13 @@ export class QueryAgent {
           include_progress: includeProgress ?? true,
           include_final_state: includeFinalState ?? true,
         }),
-      }
+      },
     );
 
     for await (const event of sseStream) {
       if (event.event === "error") {
         await handleError(event.data);
-      } 
+      }
 
       let output: ProgressMessage | StreamedTokens | QueryAgentResponse;
       if (event.event === "progress_message") {
