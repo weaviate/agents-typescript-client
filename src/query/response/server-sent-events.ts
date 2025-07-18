@@ -67,7 +67,7 @@ function parseServerSentEvents(buffer: string, flush?: boolean): { events: Serve
     remainingBuffer = sseChunks.pop() ?? "";
   }
 
-  let events: ServerSentEvent[] = [];
+  const events: ServerSentEvent[] = [];
 
   for (const chunk of sseChunks) {
     const lines = chunk.split(/\r?\n/);
