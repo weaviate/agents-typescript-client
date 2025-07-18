@@ -73,6 +73,7 @@ export class QueryAgent {
         "Content-Type": "application/json",
         Authorization: bearerToken!,
         "X-Weaviate-Cluster-Url": host,
+        "X-Agent-Request-Origin": "typescript-client",
       },
       body: JSON.stringify({
         headers,
@@ -134,6 +135,7 @@ export class QueryAgent {
           "Content-Type": "application/json",
           Authorization: bearerToken!,
           "X-Weaviate-Cluster-Url": host,
+          "X-Agent-Request-Origin": "typescript-client",
         },
         body: JSON.stringify({
           headers,
