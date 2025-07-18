@@ -1,5 +1,5 @@
 export const mapCollections = (
-  collections: (string | QueryAgentCollectionConfig)[]
+  collections: (string | QueryAgentCollectionConfig)[],
 ) =>
   collections.map((collection) =>
     typeof collection === "string"
@@ -9,7 +9,7 @@ export const mapCollections = (
           view_properties: collection.viewProperties,
           target_vector: collection.targetVector,
           tenant: collection.tenant,
-        }
+        },
   );
 
 /** Configuration for a collection to query. */
