@@ -25,7 +25,7 @@ import {
 import { ServerSentEvent } from "./server-sent-events.js";
 
 export const mapResponse = (
-  response: ApiQueryAgentResponse
+  response: ApiQueryAgentResponse,
 ): QueryAgentResponse => {
   const properties: ResponseProperties = {
     outputType: "finalState",
@@ -54,22 +54,22 @@ const mapSearches = (searches: ApiSearchResult[][]): SearchResult[][] =>
       queries: result.queries,
       filters: result.filters.map(mapPropertyFilters),
       filterOperators: result.filter_operators,
-    }))
+    })),
   );
 
-
-
-const mapDatePropertyFilter = (filterValue: ApiDateFilterValue): DateFilterValue | undefined => {
+const mapDatePropertyFilter = (
+  filterValue: ApiDateFilterValue,
+): DateFilterValue | undefined => {
   if ("exact_timestamp" in filterValue) {
     return {
       exactTimestamp: filterValue.exact_timestamp,
       operator: filterValue.operator,
     };
   } else if (
-    "date_from" in filterValue
-    && "date_to" in filterValue
-    && filterValue.date_from != null
-    && filterValue.date_to != null
+    "date_from" in filterValue &&
+    "date_to" in filterValue &&
+    filterValue.date_from != null &&
+    filterValue.date_to != null
   ) {
     return {
       dateFrom: filterValue.date_from,
@@ -89,7 +89,7 @@ const mapDatePropertyFilter = (filterValue: ApiDateFilterValue): DateFilterValue
     };
   }
   return undefined;
-}
+};
 
 const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
   filters.map((filter) => {
@@ -135,7 +135,7 @@ const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
         };
 
       case "boolean_array":
-          return {
+        return {
           filterType: "booleanArray",
           propertyName: filter.property_name,
           operator: filter.operator,
@@ -186,10 +186,10 @@ const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
           propertyName: (filter as ApiPropertyFilter).property_name,
         };
     }
-  })
+  });
 
 const mapAggregations = (
-  aggregations: ApiAggregationResult[][]
+  aggregations: ApiAggregationResult[][],
 ): AggregationResult[][] =>
   aggregations.map((aggregationGroup) =>
     aggregationGroup.map((result) => ({
@@ -198,11 +198,11 @@ const mapAggregations = (
       groupbyProperty: result.groupby_property,
       aggregations: result.aggregations.map(mapPropertyAggregation),
       filters: mapPropertyFilters(result.filters),
-    }))
+    })),
   );
 
 const mapPropertyAggregation = (
-  aggregation: ApiPropertyAggregation
+  aggregation: ApiPropertyAggregation,
 ): PropertyAggregation => ({
   propertyName: aggregation.property_name,
   metrics: aggregation.metrics,
@@ -236,10 +236,14 @@ type ProgressMessageJSON = Omit<ProgressMessage, "outputType"> & {
   output_type: "progress_message";
 };
 
-export const mapProgressMessageFromSSE = (sse: ServerSentEvent): ProgressMessage => {
+export const mapProgressMessageFromSSE = (
+  sse: ServerSentEvent,
+): ProgressMessage => {
   const data: ProgressMessageJSON = JSON.parse(sse.data);
   if (data.output_type !== "progress_message") {
-    throw new Error(`Expected output_type "progress_message", got ${data.output_type}`);
+    throw new Error(
+      `Expected output_type "progress_message", got ${data.output_type}`,
+    );
   }
 
   return {
@@ -254,10 +258,14 @@ type StreamedTokensJSON = Omit<StreamedTokens, "outputType"> & {
   output_type: "streamed_tokens";
 };
 
-export const mapStreamedTokensFromSSE = (sse: ServerSentEvent): StreamedTokens => {
+export const mapStreamedTokensFromSSE = (
+  sse: ServerSentEvent,
+): StreamedTokens => {
   const data: StreamedTokensJSON = JSON.parse(sse.data);
   if (data.output_type !== "streamed_tokens") {
-    throw new Error(`Expected output_type "streamed_tokens", got ${data.output_type}`);
+    throw new Error(
+      `Expected output_type "streamed_tokens", got ${data.output_type}`,
+    );
   }
 
   return {
@@ -266,8 +274,9 @@ export const mapStreamedTokensFromSSE = (sse: ServerSentEvent): StreamedTokens =
   };
 };
 
-
-export const mapResponseFromSSE = (sse: ServerSentEvent): QueryAgentResponse => {
+export const mapResponseFromSSE = (
+  sse: ServerSentEvent,
+): QueryAgentResponse => {
   const data: ApiQueryAgentResponse = JSON.parse(sse.data);
 
   const properties: ResponseProperties = {

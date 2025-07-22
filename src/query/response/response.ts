@@ -93,7 +93,7 @@ export type DateRangeFrom = {
 
 export type DateRangeTo = {
   dateTo: string;
-  inclusiveTo: boolean;  
+  inclusiveTo: boolean;
 };
 
 export type DateRangeBetween = {
@@ -104,7 +104,7 @@ export type DateRangeBetween = {
 };
 
 export type DateFilterValue =
-  DateExact
+  | DateExact
   | DateRangeFrom
   | DateRangeTo
   | DateRangeBetween;
@@ -226,7 +226,6 @@ export enum DateMetrics {
   Minimum = "MINIMUM",
   Mode = "MODE",
 }
-
 
 export type Usage = {
   requests: number;

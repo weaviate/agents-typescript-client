@@ -91,7 +91,7 @@ export type ApiDateRangeFrom = {
 
 export type ApiDateRangeTo = {
   date_to: string;
-  inclusive_to: boolean;  
+  inclusive_to: boolean;
 };
 
 export type ApiDateRangeBetween = {
@@ -102,7 +102,7 @@ export type ApiDateRangeBetween = {
 };
 
 export type ApiDateFilterValue =
-  ApiDateExact
+  | ApiDateExact
   | ApiDateRangeFrom
   | ApiDateRangeTo
   | ApiDateRangeBetween;
@@ -129,7 +129,6 @@ export type ApiIsNullPropertyFilter = ApiPropertyFilterBase & {
   filter_type: "is_null";
   is_null: boolean;
 };
-
 
 export type ApiAggregationResult = {
   collection: string;
