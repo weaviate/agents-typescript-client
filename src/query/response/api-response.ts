@@ -1,3 +1,5 @@
+import { WeaviateReturn } from "weaviate-client";
+
 import {
   NumericMetrics,
   TextMetrics,
@@ -176,4 +178,12 @@ export type ApiUsage = {
 export type ApiSource = {
   object_id: string;
   collection: string;
+};
+
+export type ApiSearchModeResponse = {
+  original_query: string;
+  searches?: ApiSearchResult[];
+  usage: ApiUsage;
+  total_time: number;
+  search_results: WeaviateReturn<undefined>;
 };
