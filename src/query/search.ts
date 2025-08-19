@@ -1,10 +1,12 @@
 import { WeaviateClient } from "weaviate-client";
-import { SearchModeResponse, SearchResult } from "./response/response.js";
+import { SearchModeResponse } from "./response/response.js";
 import { mapSearchOnlyResponse } from "./response/response-mapping.js";
 import { mapCollections, QueryAgentCollectionConfig } from "./collection.js";
 import { handleError } from "./response/error.js";
-import { ApiSearchModeResponse, ApiSearchResult } from "./response/api-response.js";
-
+import {
+  ApiSearchModeResponse,
+  ApiSearchResult,
+} from "./response/api-response.js";
 
 /**
  * A configured searcher for the QueryAgent.
@@ -57,7 +59,11 @@ export class QueryAgentSearcher {
     return { requestHeaders, connectionHeaders };
   }
 
-  private buildRequestBody(limit: number, offset: number, connectionHeaders: HeadersInit | undefined) {
+  private buildRequestBody(
+    limit: number,
+    offset: number,
+    connectionHeaders: HeadersInit | undefined,
+  ) {
     const base = {
       headers: connectionHeaders,
       original_query: this.query,
@@ -88,13 +94,16 @@ export class QueryAgentSearcher {
     const response = await fetch(`${this.agentsHost}/agent/search_only`, {
       method: "POST",
       headers: requestHeaders,
-      body: JSON.stringify(this.buildRequestBody(limit, offset, connectionHeaders)),
+      body: JSON.stringify(
+        this.buildRequestBody(limit, offset, connectionHeaders),
+      ),
     });
     if (!response.ok) {
       await handleError(await response.text());
     }
-    const parsedResponse = await response.json() as ApiSearchModeResponse;
-    const {mappedResponse, apiSearches} = mapSearchOnlyResponse(parsedResponse);
+    const parsedResponse = (await response.json()) as ApiSearchModeResponse;
+    const { mappedResponse, apiSearches } =
+      mapSearchOnlyResponse(parsedResponse);
     // If we successfully mapped the searches, cache them for the next request.
     // Since this cache is a private internal value, there's not point in mapping
     // back and forth between the exported and API types, so we cache apiSearches

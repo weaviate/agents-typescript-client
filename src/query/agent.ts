@@ -236,7 +236,6 @@ export type QueryAgentStreamOptions = {
   includeFinalState?: boolean;
 };
 
-
 /** Options for the QueryAgent search-only run. */
 export type QueryAgentSearchOnlyOptions = {
   /** List of collections to query. Will override any collections if passed in the constructor. */

@@ -304,7 +304,10 @@ export const mapResponseFromSSE = (
 
 export const mapSearchOnlyResponse = (
   response: ApiSearchModeResponse,
-): { mappedResponse: SearchModeResponse, apiSearches: ApiSearchResult[] | undefined } => {
+): {
+  mappedResponse: SearchModeResponse;
+  apiSearches: ApiSearchResult[] | undefined;
+} => {
   const apiSearches = response.searches;
   const mappedResponse: SearchModeResponse = {
     originalQuery: response.original_query,
@@ -313,5 +316,5 @@ export const mapSearchOnlyResponse = (
     totalTime: response.total_time,
     searchResults: response.search_results,
   };
-  return {mappedResponse, apiSearches};
+  return { mappedResponse, apiSearches };
 };
