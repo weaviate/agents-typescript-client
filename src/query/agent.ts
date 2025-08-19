@@ -14,6 +14,7 @@ import { mapApiResponse } from "./response/api-response-mapping.js";
 import { fetchServerSentEvents } from "./response/server-sent-events.js";
 import { mapCollections, QueryAgentCollectionConfig } from "./collection.js";
 import { handleError } from "./response/error.js";
+import { QueryAgentSearcher } from "./search.js";
 
 /**
  * An agent for executing agentic queries against Weaviate.
@@ -185,6 +186,24 @@ export class QueryAgent {
       yield output;
     }
   }
+
+  /**
+   * Prepare a searcher for the query agent.
+   *
+   * @param query - The natural language query string for the agent.
+   * @param options - Additional options for the searcher.
+   * @returns The searcher for the query agent.
+   */
+  prepareSearch(
+    query: string,
+    { collections }: QueryAgentSearchOnlyOptions = {},
+  ): QueryAgentSearcher {
+    return new QueryAgentSearcher(this.client, query, {
+      collections: collections ?? this.collections,
+      systemPrompt: this.systemPrompt,
+      agentsHost: this.agentsHost,
+    });
+  }
 }
 
 /** Options for the QueryAgent. */
@@ -215,4 +234,11 @@ export type QueryAgentStreamOptions = {
   includeProgress?: boolean;
   /** Include final state in the stream. */
   includeFinalState?: boolean;
+};
+
+
+/** Options for the QueryAgent search-only run. */
+export type QueryAgentSearchOnlyOptions = {
+  /** List of collections to query. Will override any collections if passed in the constructor. */
+  collections?: (string | QueryAgentCollectionConfig)[];
 };
