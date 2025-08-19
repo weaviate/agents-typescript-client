@@ -302,14 +302,14 @@ export const mapResponseFromSSE = (
   };
 };
 
-export const mapSearchOnlyResponse = (
-  response: ApiSearchModeResponse,
+export const mapSearchOnlyResponse = <T>(
+  response: ApiSearchModeResponse<T>,
 ): {
-  mappedResponse: SearchModeResponse;
+  mappedResponse: SearchModeResponse<T>;
   apiSearches: ApiSearchResult[] | undefined;
 } => {
   const apiSearches = response.searches;
-  const mappedResponse: SearchModeResponse = {
+  const mappedResponse: SearchModeResponse<T> = {
     originalQuery: response.original_query,
     searches: apiSearches ? mapInnerSearches(apiSearches) : undefined,
     usage: mapUsage(response.usage),

@@ -180,10 +180,10 @@ export type ApiSource = {
   collection: string;
 };
 
-export type ApiSearchModeResponse = {
+export type ApiSearchModeResponse<T> = {
   original_query: string;
   searches?: ApiSearchResult[];
   usage: ApiUsage;
   total_time: number;
-  search_results: WeaviateReturn<undefined>;
+  search_results: WeaviateReturn<T>;
 };

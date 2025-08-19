@@ -263,10 +263,10 @@ export type StreamedTokens = {
   delta: string;
 };
 
-export type SearchModeResponse = {
+export type SearchModeResponse<T> = {
   originalQuery: string;
   searches?: SearchResult[];
   usage: Usage;
   totalTime: number;
-  searchResults: WeaviateReturn<undefined>;
+  searchResults: WeaviateReturn<T>;
 };

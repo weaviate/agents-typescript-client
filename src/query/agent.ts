@@ -194,10 +194,10 @@ export class QueryAgent {
    * @param options - Additional options for the searcher.
    * @returns The searcher for the query agent.
    */
-  prepareSearch(
+  prepareSearch<T = undefined>(
     query: string,
     { collections }: QueryAgentSearchOnlyOptions = {},
-  ): QueryAgentSearcher {
+  ): QueryAgentSearcher<T> {
     return new QueryAgentSearcher(this.client, query, {
       collections: collections ?? this.collections,
       systemPrompt: this.systemPrompt,
