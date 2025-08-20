@@ -18,8 +18,6 @@ import {
  * For more information, see the [Weaviate Query Agent Docs](https://weaviate.io/developers/agents/query)
  */
 export class QueryAgentSearcher<T> {
-  //private headers: Record<string, string> = {};
-  //private connectionHeaders: HeadersInit | undefined;
   private agentsHost: string;
   private query: string;
   private collections: (string | QueryAgentCollectionConfig)[];
