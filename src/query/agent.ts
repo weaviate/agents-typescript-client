@@ -188,13 +188,21 @@ export class QueryAgent {
   }
 
   /**
-   * Prepare a searcher for the query agent.
+   * Configure a QueryAgentSearcher for the search-only mode of the query agent.
+   *
+   * This returns a configured QueryAgentSearcher, but does not send any requests or
+   * run the agent. To do that, you should call the `run` method on the searcher.
+   *
+   * This allows you to paginate through a consistent results set, as calling the
+   * `run` method on the searcher multiple times will result in the same underlying
+   * searches being performed each time.
    *
    * @param query - The natural language query string for the agent.
-   * @param options - Additional options for the searcher.
-   * @returns The searcher for the query agent.
+   * @param options - Additional options for configuring the searcher.
+   * @param options.collections - The collections to query. Will override any collections if passed in the constructor.
+   * @returns A configured QueryAgentSearcher for the search-only mode of the query agent.
    */
-  prepareSearch<T = undefined>(
+  configureSearch<T = undefined>(
     query: string,
     { collections }: QueryAgentSearchOnlyOptions = {},
   ): QueryAgentSearcher<T> {

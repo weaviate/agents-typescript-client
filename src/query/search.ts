@@ -11,6 +11,12 @@ import {
 /**
  * A configured searcher for the QueryAgent.
  *
+ * This is configured using the `QueryAgent.configureSearch` method, which builds this class
+ * but does not send any requests and run the agent. The configured search can then be run
+ * using the `run` method. You can paginate through the results set by running the `run` method
+ * multiple times on the same searcher instance, but with different `limit` / `offset` values;
+ * this will result in the same underlying searches being performed each time.
+ *
  * Warning:
  * Weaviate Agents - Query Agent is an early stage alpha product.
  * The API is subject to breaking changes. Please ensure you are using the latest version of the client.
@@ -82,9 +88,19 @@ export class QueryAgentSearcher<T> {
     };
   }
 
-  async execute(
-    options: SearchExecutionOptions,
-  ): Promise<SearchModeResponse<T>> {
+  /**
+   * Run the search-only agent with the given limit and offset values.
+   *
+   * Calling this method multiple times on the same QueryAgentSearcher instance will result
+   * in the same underlying searches being performed each time, allowing you to paginate
+   * over a consistent results set.
+   *
+   * @param options - Options for executing the search
+   * @param options.limit - The maximum number of results to return. Defaults to 20 if not specified.
+   * @param options.offset - The offset to start from. If not specified, retrieval begins from the first object.
+   * @returns A SearchModeResponse object containing the results, usage, and underlying searches performed.
+   */
+  async run(options: SearchExecutionOptions): Promise<SearchModeResponse<T>> {
     if (!this.collections || this.collections.length === 0) {
       throw Error("No collections provided to the query agent.");
     }

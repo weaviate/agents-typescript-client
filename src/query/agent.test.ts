@@ -114,7 +114,7 @@ it("prepareSearch returns a QueryAgentSearcher", async () => {
     systemPrompt: "test system prompt",
   });
 
-  const searcher = agent.prepareSearch("test query");
+  const searcher = agent.configureSearch("test query");
   expect(searcher).toBeInstanceOf(QueryAgentSearcher);
 });
 
@@ -196,11 +196,11 @@ it("search-only mode success: caches searches and sends on subsequent request", 
   }) as jest.Mock;
 
   const agent = new QueryAgent(mockClient);
-  const searcher = agent.prepareSearch("test query", {
+  const searcher = agent.configureSearch("test query", {
     collections: ["test_collection"],
   });
 
-  const first = await searcher.execute({ limit: 2, offset: 0 });
+  const first = await searcher.run({ limit: 2, offset: 0 });
 
   expect(first).toEqual<SearchModeResponse<undefined>>({
     originalQuery: apiSuccess.original_query,
@@ -234,7 +234,7 @@ it("search-only mode success: caches searches and sends on subsequent request", 
 
   // First request should have searches: null (generation request)
   expect(capturedBodies[0].searches).toBeNull();
-  const second = await searcher.execute({ limit: 2, offset: 1 });
+  const second = await searcher.run({ limit: 2, offset: 1 });
   // Second request should include the original searches (execution request)
   expect(capturedBodies[1].searches).toEqual(apiSuccess.searches);
   // Response mapping should be the same (because response is mocked)
@@ -266,12 +266,12 @@ it("search-only mode failure propagates QueryAgentError", async () => {
   ) as jest.Mock;
 
   const agent = new QueryAgent(mockClient);
-  const searcher = agent.prepareSearch("test query", {
+  const searcher = agent.configureSearch("test query", {
     collections: ["test_collection"],
   });
 
   try {
-    await searcher.execute({ limit: 2, offset: 0 });
+    await searcher.run({ limit: 2, offset: 0 });
   } catch (err) {
     expect(err).toBeInstanceOf(QueryAgentError);
     expect(err).toMatchObject({
