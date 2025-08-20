@@ -84,7 +84,9 @@ export class QueryAgentSearcher<T> {
     };
   }
 
-  async execute(options: SearchExecutionOptions): Promise<SearchModeResponse<T>> {
+  async execute(
+    options: SearchExecutionOptions,
+  ): Promise<SearchModeResponse<T>> {
     if (!this.collections || this.collections.length === 0) {
       throw Error("No collections provided to the query agent.");
     }
