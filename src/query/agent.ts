@@ -15,6 +15,7 @@ import { fetchServerSentEvents } from "./response/server-sent-events.js";
 import { mapCollections, QueryAgentCollectionConfig } from "./collection.js";
 import { handleError } from "./response/error.js";
 import { QueryAgentSearcher } from "./search.js";
+import { SearchModeResponse } from "./response/response.js";
 
 /**
  * An agent for executing agentic queries against Weaviate.
@@ -188,29 +189,22 @@ export class QueryAgent {
   }
 
   /**
-   * Configure a QueryAgentSearcher for the search-only mode of the query agent.
+   * Run the Query Agent search-only mode.
    *
-   * This returns a configured QueryAgentSearcher, but does not send any requests or
-   * run the agent. To do that, you should call the `run` method on the searcher.
-   *
-   * This allows you to paginate through a consistent results set, as calling the
-   * `run` method on the searcher multiple times will result in the same underlying
-   * searches being performed each time.
-   *
-   * @param query - The natural language query string for the agent.
-   * @param options - Additional options for configuring the searcher.
-   * @param options.collections - The collections to query. Will override any collections if passed in the constructor.
-   * @returns A configured QueryAgentSearcher for the search-only mode of the query agent.
+   * Sends the initial search request and returns the first page of results.
+   * The returned response includes a `next` method for pagination which
+   * reuses the same underlying searches to ensure consistency across pages.
    */
-  configureSearch<T = undefined>(
+  async search<T = undefined>(
     query: string,
-    { collections }: QueryAgentSearchOnlyOptions = {},
-  ): QueryAgentSearcher<T> {
-    return new QueryAgentSearcher(this.client, query, {
+    { limit, collections }: QueryAgentSearchOnlyOptions = {},
+  ): Promise<SearchModeResponse<T>> {
+    const searcher = new QueryAgentSearcher<T>(this.client, query, {
       collections: collections ?? this.collections,
       systemPrompt: this.systemPrompt,
       agentsHost: this.agentsHost,
-    });
+    })
+    return searcher.run({ limit: limit ?? 20, offset: 0 });
   }
 }
 
@@ -246,6 +240,8 @@ export type QueryAgentStreamOptions = {
 
 /** Options for the QueryAgent search-only run. */
 export type QueryAgentSearchOnlyOptions = {
+  /** The maximum number of results to return. */
+  limit?: number;
   /** List of collections to query. Will override any collections if passed in the constructor. */
   collections?: (string | QueryAgentCollectionConfig)[];
 };

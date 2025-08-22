@@ -9,7 +9,7 @@ import {
   StreamedTokens,
   ProgressMessage,
   DateFilterValue,
-  SearchModeResponse,
+  MappedSearchModeResponse,
 } from "./response.js";
 
 import {
@@ -305,11 +305,11 @@ export const mapResponseFromSSE = (
 export const mapSearchOnlyResponse = <T>(
   response: ApiSearchModeResponse<T>,
 ): {
-  mappedResponse: SearchModeResponse<T>;
+  mappedResponse: MappedSearchModeResponse<T>;
   apiSearches: ApiSearchResult[] | undefined;
 } => {
   const apiSearches = response.searches;
-  const mappedResponse: SearchModeResponse<T> = {
+  const mappedResponse: MappedSearchModeResponse<T> = {
     originalQuery: response.original_query,
     searches: apiSearches ? mapInnerSearches(apiSearches) : undefined,
     usage: mapUsage(response.usage),

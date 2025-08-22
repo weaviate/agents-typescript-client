@@ -126,7 +126,11 @@ export class QueryAgentSearcher<T> {
     if (mappedResponse.searches) {
       this.cachedSearches = apiSearches;
     }
-    return mappedResponse;
+    return {
+      ...mappedResponse,
+      next: async ({ limit: nextLimit = 20, offset: nextOffset = 0 } = {}) =>
+        this.run({ limit: nextLimit, offset: nextOffset }),
+    };
   }
 }
 

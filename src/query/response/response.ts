@@ -263,10 +263,14 @@ export type StreamedTokens = {
   delta: string;
 };
 
-export type SearchModeResponse<T> = {
+export type MappedSearchModeResponse<T> = {
   originalQuery: string;
   searches?: SearchResult[];
   usage: Usage;
   totalTime: number;
   searchResults: WeaviateReturn<T>;
+};
+
+export type SearchModeResponse<T> = MappedSearchModeResponse<T> & {
+  next: (options?: { limit?: number; offset?: number }) => Promise<SearchModeResponse<T>>;
 };
