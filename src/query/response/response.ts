@@ -272,5 +272,8 @@ export type MappedSearchModeResponse<T> = {
 };
 
 export type SearchModeResponse<T> = MappedSearchModeResponse<T> & {
-  next: (options?: { limit?: number; offset?: number }) => Promise<SearchModeResponse<T>>;
+  next: (options?: {
+    limit?: number;
+    offset?: number;
+  }) => Promise<SearchModeResponse<T>>;
 };

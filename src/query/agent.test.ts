@@ -1,10 +1,7 @@
 import { WeaviateClient } from "weaviate-client";
 import { QueryAgent } from "./agent.js";
 import { ApiQueryAgentResponse } from "./response/api-response.js";
-import {
-  QueryAgentResponse,
-  ComparisonOperator,
-} from "./response/response.js";
+import { QueryAgentResponse, ComparisonOperator } from "./response/response.js";
 import { ApiSearchModeResponse } from "./response/api-response.js";
 import { QueryAgentError } from "./response/error.js";
 
@@ -176,9 +173,12 @@ it("search-only mode success: caches searches and sends on subsequent request", 
     } as Response);
   }) as jest.Mock;
 
-  const agent = new QueryAgent(mockClient)
+  const agent = new QueryAgent(mockClient);
 
-  const first = await agent.search("test query", { limit: 2, collections: ["test_collection"] });
+  const first = await agent.search("test query", {
+    limit: 2,
+    collections: ["test_collection"],
+  });
   expect(first).toMatchObject({
     originalQuery: apiSuccess.original_query,
     searches: [
@@ -254,7 +254,10 @@ it("search-only mode failure propagates QueryAgentError", async () => {
 
   const agent = new QueryAgent(mockClient);
   try {
-    await agent.search("test query", { limit: 2, collections: ["test_collection"] });
+    await agent.search("test query", {
+      limit: 2,
+      collections: ["test_collection"],
+    });
   } catch (err) {
     expect(err).toBeInstanceOf(QueryAgentError);
     expect(err).toMatchObject({

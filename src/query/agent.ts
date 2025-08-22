@@ -203,7 +203,7 @@ export class QueryAgent {
       collections: collections ?? this.collections,
       systemPrompt: this.systemPrompt,
       agentsHost: this.agentsHost,
-    })
+    });
     return searcher.run({ limit: limit ?? 20, offset: 0 });
   }
 }
