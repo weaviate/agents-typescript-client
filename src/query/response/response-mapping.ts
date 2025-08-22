@@ -9,6 +9,7 @@ import {
   StreamedTokens,
   ProgressMessage,
   DateFilterValue,
+  MappedSearchModeResponse,
 } from "./response.js";
 
 import {
@@ -20,6 +21,7 @@ import {
   ApiUsage,
   ApiSource,
   ApiDateFilterValue,
+  ApiSearchModeResponse,
 } from "./api-response.js";
 
 import { ServerSentEvent } from "./server-sent-events.js";
@@ -47,15 +49,16 @@ export const mapResponse = (
   };
 };
 
+const mapInnerSearches = (searches: ApiSearchResult[]): SearchResult[] =>
+  searches.map((result) => ({
+    collection: result.collection,
+    queries: result.queries,
+    filters: result.filters.map(mapPropertyFilters),
+    filterOperators: result.filter_operators,
+  }));
+
 const mapSearches = (searches: ApiSearchResult[][]): SearchResult[][] =>
-  searches.map((searchGroup) =>
-    searchGroup.map((result) => ({
-      collection: result.collection,
-      queries: result.queries,
-      filters: result.filters.map(mapPropertyFilters),
-      filterOperators: result.filter_operators,
-    })),
-  );
+  searches.map((searchGroup) => mapInnerSearches(searchGroup));
 
 const mapDatePropertyFilter = (
   filterValue: ApiDateFilterValue,
@@ -297,4 +300,21 @@ export const mapResponseFromSSE = (
     ...properties,
     display: () => display(properties),
   };
+};
+
+export const mapSearchOnlyResponse = <T>(
+  response: ApiSearchModeResponse<T>,
+): {
+  mappedResponse: MappedSearchModeResponse<T>;
+  apiSearches: ApiSearchResult[] | undefined;
+} => {
+  const apiSearches = response.searches;
+  const mappedResponse: MappedSearchModeResponse<T> = {
+    originalQuery: response.original_query,
+    searches: apiSearches ? mapInnerSearches(apiSearches) : undefined,
+    usage: mapUsage(response.usage),
+    totalTime: response.total_time,
+    searchResults: response.search_results,
+  };
+  return { mappedResponse, apiSearches };
 };
