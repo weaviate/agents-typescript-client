@@ -1,3 +1,5 @@
+import { WeaviateReturn } from "weaviate-client";
+
 export type QueryAgentResponse = {
   outputType: "finalState";
   originalQuery: string;
@@ -259,4 +261,24 @@ export type ProgressMessage = {
 export type StreamedTokens = {
   outputType: "streamedTokens";
   delta: string;
+};
+
+export type MappedSearchModeResponse<T> = {
+  originalQuery: string;
+  searches?: SearchResult[];
+  usage: Usage;
+  totalTime: number;
+  searchResults: WeaviateReturn<T>;
+};
+
+/** Options for the executing a prepared QueryAgent search. */
+export type SearchExecutionOptions = {
+  /** The maximum number of results to return. */
+  limit?: number;
+  /** The offset of the results to return, for paginating through query result sets. */
+  offset?: number;
+};
+
+export type SearchModeResponse<T> = MappedSearchModeResponse<T> & {
+  next: (options: SearchExecutionOptions) => Promise<SearchModeResponse<T>>;
 };
