@@ -197,14 +197,14 @@ export class QueryAgent {
    */
   async search<T = undefined>(
     query: string,
-    { limit, collections }: QueryAgentSearchOnlyOptions = {},
+    { limit = 20, collections }: QueryAgentSearchOnlyOptions = {},
   ): Promise<SearchModeResponse<T>> {
     const searcher = new QueryAgentSearcher<T>(this.client, query, {
       collections: collections ?? this.collections,
       systemPrompt: this.systemPrompt,
       agentsHost: this.agentsHost,
     });
-    return searcher.run({ limit: limit ?? 20, offset: 0 });
+    return searcher.run({ limit, offset: 0 });
   }
 }
 

@@ -271,9 +271,14 @@ export type MappedSearchModeResponse<T> = {
   searchResults: WeaviateReturn<T>;
 };
 
+/** Options for the executing a prepared QueryAgent search. */
+export type SearchExecutionOptions = {
+  /** The maximum number of results to return. */
+  limit?: number;
+  /** The offset of the results to return, for paginating through query result sets. */
+  offset?: number;
+};
+
 export type SearchModeResponse<T> = MappedSearchModeResponse<T> & {
-  next: (options?: {
-    limit?: number;
-    offset?: number;
-  }) => Promise<SearchModeResponse<T>>;
+  next: (options: SearchExecutionOptions) => Promise<SearchModeResponse<T>>;
 };

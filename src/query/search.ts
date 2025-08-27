@@ -1,5 +1,8 @@
 import { WeaviateClient } from "weaviate-client";
-import { SearchModeResponse } from "./response/response.js";
+import {
+  SearchExecutionOptions,
+  SearchModeResponse,
+} from "./response/response.js";
 import { mapSearchOnlyResponse } from "./response/response-mapping.js";
 import { mapCollections, QueryAgentCollectionConfig } from "./collection.js";
 import { handleError } from "./response/error.js";
@@ -95,18 +98,19 @@ export class QueryAgentSearcher<T> {
    * in the same underlying searches being performed each time, allowing you to paginate
    * over a consistent results set.
    *
-   * @param options - Options for executing the search
-   * @param options.limit - The maximum number of results to return. Defaults to 20 if not specified.
-   * @param options.offset - The offset to start from. If not specified, retrieval begins from the first object.
+   * @param [options] - Options for executing the search
+   * @param [options.limit] - The maximum number of results to return. Defaults to 20 if not specified.
+   * @param [options.offset] - The offset to start from. If not specified, retrieval begins from the first object.
    * @returns A SearchModeResponse object containing the results, usage, and underlying searches performed.
    */
-  async run(options: SearchExecutionOptions): Promise<SearchModeResponse<T>> {
+  async run({ limit = 20, offset = 0 }: SearchExecutionOptions = {}): Promise<
+    SearchModeResponse<T>
+  > {
     if (!this.collections || this.collections.length === 0) {
       throw Error("No collections provided to the query agent.");
     }
     const { requestHeaders, connectionHeaders } = await this.getHeaders();
 
-    const { limit = 20, offset = 0 } = options;
     const response = await fetch(`${this.agentsHost}/agent/search_only`, {
       method: "POST",
       headers: requestHeaders,
@@ -128,16 +132,7 @@ export class QueryAgentSearcher<T> {
     }
     return {
       ...mappedResponse,
-      next: async ({ limit: nextLimit = 20, offset: nextOffset = 0 } = {}) =>
-        this.run({ limit: nextLimit, offset: nextOffset }),
+      next: async (options: SearchExecutionOptions = {}) => this.run(options),
     };
   }
 }
-
-/** Options for the executing a prepared QueryAgent search. */
-export type SearchExecutionOptions = {
-  /** The maximum number of results to return. */
-  limit?: number;
-  /** The offset of the results to return, for paginating through query result sets. */
-  offset?: number;
-};
