@@ -11,7 +11,6 @@ import {
   StreamedTokens,
   ProgressMessage,
   DateFilterValue,
-  //MappedSearchModeResponse,
   WeaviateObjectWithCollection,
   WeaviateReturnWithCollection,
   SearchModeResponse,
