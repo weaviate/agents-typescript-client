@@ -271,14 +271,6 @@ export type WeaviateReturnWithCollection = WeaviateReturn<undefined> & {
   objects: WeaviateObjectWithCollection[];
 };
 
-export type MappedSearchModeResponse = {
-  originalQuery: string;
-  searches?: SearchResult[];
-  usage: Usage;
-  totalTime: number;
-  searchResults: WeaviateReturnWithCollection;
-};
-
 /** Options for the executing a prepared QueryAgent search. */
 export type SearchExecutionOptions = {
   /** The maximum number of results to return. */
@@ -287,6 +279,11 @@ export type SearchExecutionOptions = {
   offset?: number;
 };
 
-export type SearchModeResponse = MappedSearchModeResponse & {
+export type SearchModeResponse = {
+  originalQuery: string;
+  searches?: SearchResult[];
+  usage: Usage;
+  totalTime: number;
+  searchResults: WeaviateReturnWithCollection;
   next: (options: SearchExecutionOptions) => Promise<SearchModeResponse>;
 };

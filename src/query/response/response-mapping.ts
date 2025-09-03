@@ -11,9 +11,10 @@ import {
   StreamedTokens,
   ProgressMessage,
   DateFilterValue,
-  MappedSearchModeResponse,
+  //MappedSearchModeResponse,
   WeaviateObjectWithCollection,
   WeaviateReturnWithCollection,
+  SearchModeResponse,
 } from "./response.js";
 
 import {
@@ -360,11 +361,11 @@ export const mapWeviateSearchResults = (
 export const mapSearchOnlyResponse = (
   response: ApiSearchModeResponse,
 ): {
-  mappedResponse: MappedSearchModeResponse;
+  mappedResponse: Omit<SearchModeResponse, "next">;
   apiSearches: ApiSearchResult[] | undefined;
 } => {
   const apiSearches = response.searches;
-  const mappedResponse: MappedSearchModeResponse = {
+  const mappedResponse: Omit<SearchModeResponse, "next"> = {
     originalQuery: response.original_query,
     searches: apiSearches ? mapInnerSearches(apiSearches) : undefined,
     usage: mapUsage(response.usage),
