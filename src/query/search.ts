@@ -133,7 +133,7 @@ export class QueryAgentSearcher {
     }
     return {
       ...mappedResponse,
-      next: async (options: SearchExecutionOptions = {}) => this.run(options),
+      next: async (options: SearchExecutionOptions) => this.run(options),
     };
   }
 }
