@@ -197,11 +197,11 @@ export type ApiWeaviateObject = {
   /** The returned metadata of the object. */
   metadata: ApiReturnMetadata;
   /** The returned references of the object. */
-  references: null; // TODO: QA never requests references, so they're never returned?? Check this
+  references: null;
   /** The UUID of the object. */
   uuid: string;
   /** The returned vectors of the object. */
-  vector: Vectors; // TODO: note no s!
+  vector: Vectors;
   collection: string; // NOTE: NEW
 };
 
