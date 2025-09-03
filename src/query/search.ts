@@ -14,11 +14,9 @@ import {
 /**
  * A configured searcher for the QueryAgent.
  *
- * This is configured using the `QueryAgent.configureSearch` method, which builds this class
- * but does not send any requests and run the agent. The configured search can then be run
- * using the `run` method. You can paginate through the results set by running the `run` method
- * multiple times on the same searcher instance, but with different `limit` / `offset` values;
- * this will result in the same underlying searches being performed each time.
+ * This is used internally by the QueryAgent class to run search-mode queries.
+ * After the first request is made, the underlying searches are cached and can
+ * be reused for paginating through the a consistent set of results.
  *
  * Warning:
  * Weaviate Agents - Query Agent is an early stage alpha product.
