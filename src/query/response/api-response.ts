@@ -202,7 +202,8 @@ export type ApiWeaviateObject = {
   uuid: string;
   /** The returned vectors of the object. */
   vector: Vectors;
-  collection: string; // NOTE: NEW
+  /** The collection this object belongs to. */
+  collection: string;
 };
 
 export type ApiWeaviateReturn = {
