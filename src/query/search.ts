@@ -26,7 +26,7 @@ import {
  *
  * For more information, see the [Weaviate Query Agent Docs](https://weaviate.io/developers/agents/query)
  */
-export class QueryAgentSearcher<T> {
+export class QueryAgentSearcher {
   private agentsHost: string;
   private query: string;
   private collections: (string | QueryAgentCollectionConfig)[];
@@ -103,9 +103,10 @@ export class QueryAgentSearcher<T> {
    * @param [options.offset] - The offset to start from. If not specified, retrieval begins from the first object.
    * @returns A SearchModeResponse object containing the results, usage, and underlying searches performed.
    */
-  async run({ limit = 20, offset = 0 }: SearchExecutionOptions = {}): Promise<
-    SearchModeResponse<T>
-  > {
+  async run({
+    limit = 20,
+    offset = 0,
+  }: SearchExecutionOptions = {}): Promise<SearchModeResponse> {
     if (!this.collections || this.collections.length === 0) {
       throw Error("No collections provided to the query agent.");
     }
@@ -121,9 +122,9 @@ export class QueryAgentSearcher<T> {
     if (!response.ok) {
       await handleError(await response.text());
     }
-    const parsedResponse = (await response.json()) as ApiSearchModeResponse<T>;
+    const parsedResponse = (await response.json()) as ApiSearchModeResponse;
     const { mappedResponse, apiSearches } =
-      mapSearchOnlyResponse<T>(parsedResponse);
+      mapSearchOnlyResponse(parsedResponse);
     // If we successfully mapped the searches, cache them for the next request.
     // Since this cache is a private internal value, there's not point in mapping
     // back and forth between the exported and API types, so we cache apiSearches

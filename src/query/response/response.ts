@@ -1,4 +1,4 @@
-import { WeaviateReturn } from "weaviate-client";
+import { WeaviateReturn, WeaviateObject } from "weaviate-client";
 
 export type QueryAgentResponse = {
   outputType: "finalState";
@@ -263,12 +263,20 @@ export type StreamedTokens = {
   delta: string;
 };
 
-export type MappedSearchModeResponse<T> = {
+export type WeaviateObjectWithCollection = WeaviateObject<undefined> & {
+  collection: string;
+};
+
+export type WeaviateReturnWithCollection = WeaviateReturn<undefined> & {
+  objects: WeaviateObjectWithCollection[];
+};
+
+export type MappedSearchModeResponse = {
   originalQuery: string;
   searches?: SearchResult[];
   usage: Usage;
   totalTime: number;
-  searchResults: WeaviateReturn<T>;
+  searchResults: WeaviateReturnWithCollection;
 };
 
 /** Options for the executing a prepared QueryAgent search. */
@@ -279,6 +287,6 @@ export type SearchExecutionOptions = {
   offset?: number;
 };
 
-export type SearchModeResponse<T> = MappedSearchModeResponse<T> & {
-  next: (options: SearchExecutionOptions) => Promise<SearchModeResponse<T>>;
+export type SearchModeResponse = MappedSearchModeResponse & {
+  next: (options: SearchExecutionOptions) => Promise<SearchModeResponse>;
 };

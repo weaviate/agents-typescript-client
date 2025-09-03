@@ -105,9 +105,9 @@ it("search-only mode success: caches searches and sends on subsequent request", 
     }),
   } as unknown as WeaviateClient;
 
-  const capturedBodies: ApiSearchModeResponse<undefined>[] = [];
+  const capturedBodies: ApiSearchModeResponse[] = [];
 
-  const apiSuccess: ApiSearchModeResponse<undefined> = {
+  const apiSuccess: ApiSearchModeResponse = {
     original_query: "Test this search only mode!",
     searches: [
       {
@@ -138,23 +138,43 @@ it("search-only mode success: caches searches and sends on subsequent request", 
       objects: [
         {
           uuid: "e6dc0a31-76f8-4bd3-b563-677ced6eb557",
-          metadata: {},
-          references: {},
-          vectors: {},
+          metadata: {
+            creation_time: null,
+            update_time: null,
+            distance: null,
+            certainty: null,
+            score: 0.8,
+            explain_score: null,
+            rerank_score: null,
+            is_consistent: null,
+          },
+          references: null,
+          vector: {},
           properties: {
             test_property: 1.0,
             text: "hello",
           },
+          collection: "test_collection",
         },
         {
           uuid: "cf5401cc-f4f1-4eb9-a6a1-173d34f94339",
-          metadata: {},
-          references: {},
-          vectors: {},
+          metadata: {
+            creation_time: null,
+            update_time: null,
+            distance: null,
+            certainty: null,
+            score: 0.5,
+            explain_score: null,
+            rerank_score: null,
+            is_consistent: null,
+          },
+          references: null,
+          vector: {},
           properties: {
             test_property: 2.0,
             text: "world!",
           },
+          collection: "test_collection",
         },
       ],
     },
@@ -164,7 +184,7 @@ it("search-only mode success: caches searches and sends on subsequent request", 
   global.fetch = jest.fn((url, init?: RequestInit) => {
     if (init && init.body) {
       capturedBodies.push(
-        JSON.parse(init.body as string) as ApiSearchModeResponse<undefined>,
+        JSON.parse(init.body as string) as ApiSearchModeResponse,
       );
     }
     return Promise.resolve({
@@ -206,7 +226,34 @@ it("search-only mode success: caches searches and sends on subsequent request", 
       details: undefined,
     },
     totalTime: 1.5,
-    searchResults: apiSuccess.search_results,
+    searchResults: {
+      objects: [
+        {
+          uuid: "e6dc0a31-76f8-4bd3-b563-677ced6eb557",
+          metadata: {
+            score: 0.8,
+          },
+          vectors: {},
+          properties: {
+            test_property: 1.0,
+            text: "hello",
+          },
+          collection: "test_collection",
+        },
+        {
+          uuid: "cf5401cc-f4f1-4eb9-a6a1-173d34f94339",
+          metadata: {
+            score: 0.5,
+          },
+          vectors: {},
+          properties: {
+            test_property: 2.0,
+            text: "world!",
+          },
+          collection: "test_collection",
+        },
+      ],
+    },
   });
   expect(typeof first.next).toBe("function");
 

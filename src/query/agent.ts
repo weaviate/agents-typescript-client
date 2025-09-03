@@ -195,11 +195,11 @@ export class QueryAgent {
    * The returned response includes a `next` method for pagination which
    * reuses the same underlying searches to ensure consistency across pages.
    */
-  async search<T = undefined>(
+  async search(
     query: string,
     { limit = 20, collections }: QueryAgentSearchOnlyOptions = {},
-  ): Promise<SearchModeResponse<T>> {
-    const searcher = new QueryAgentSearcher<T>(this.client, query, {
+  ): Promise<SearchModeResponse> {
+    const searcher = new QueryAgentSearcher(this.client, query, {
       collections: collections ?? this.collections,
       systemPrompt: this.systemPrompt,
       agentsHost: this.agentsHost,

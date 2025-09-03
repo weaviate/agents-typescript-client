@@ -1,3 +1,5 @@
+import { ReturnMetadata } from "weaviate-client";
+
 import {
   QueryAgentResponse,
   SearchResult,
@@ -10,6 +12,8 @@ import {
   ProgressMessage,
   DateFilterValue,
   MappedSearchModeResponse,
+  WeaviateObjectWithCollection,
+  WeaviateReturnWithCollection,
 } from "./response.js";
 
 import {
@@ -22,6 +26,8 @@ import {
   ApiSource,
   ApiDateFilterValue,
   ApiSearchModeResponse,
+  ApiWeaviateObject,
+  ApiWeaviateReturn,
 } from "./api-response.js";
 
 import { ServerSentEvent } from "./server-sent-events.js";
@@ -302,19 +308,68 @@ export const mapResponseFromSSE = (
   };
 };
 
-export const mapSearchOnlyResponse = <T>(
-  response: ApiSearchModeResponse<T>,
+const mapWeaviateObject = (
+  object: ApiWeaviateObject,
+): WeaviateObjectWithCollection => {
+  const metadata: ReturnMetadata = {
+    creationTime:
+      object.metadata.creation_time !== null
+        ? object.metadata.creation_time
+        : undefined,
+    updateTime:
+      object.metadata.update_time !== null
+        ? object.metadata.update_time
+        : undefined,
+    distance:
+      object.metadata.distance !== null ? object.metadata.distance : undefined,
+    certainty:
+      object.metadata.certainty !== null
+        ? object.metadata.certainty
+        : undefined,
+    score: object.metadata.score !== null ? object.metadata.score : undefined,
+    explainScore:
+      object.metadata.explain_score !== null
+        ? object.metadata.explain_score
+        : undefined,
+    rerankScore:
+      object.metadata.rerank_score !== null
+        ? object.metadata.rerank_score
+        : undefined,
+    isConsistent:
+      object.metadata.is_consistent !== null
+        ? object.metadata.is_consistent
+        : undefined,
+  };
+
+  return {
+    properties: object.properties,
+    metadata: metadata,
+    references: undefined,
+    uuid: object.uuid,
+    vectors: object.vector,
+    collection: object.collection,
+  };
+};
+
+export const mapWeviateSearchResults = (
+  response: ApiWeaviateReturn,
+): WeaviateReturnWithCollection => ({
+  objects: response.objects.map(mapWeaviateObject),
+});
+
+export const mapSearchOnlyResponse = (
+  response: ApiSearchModeResponse,
 ): {
-  mappedResponse: MappedSearchModeResponse<T>;
+  mappedResponse: MappedSearchModeResponse;
   apiSearches: ApiSearchResult[] | undefined;
 } => {
   const apiSearches = response.searches;
-  const mappedResponse: MappedSearchModeResponse<T> = {
+  const mappedResponse: MappedSearchModeResponse = {
     originalQuery: response.original_query,
     searches: apiSearches ? mapInnerSearches(apiSearches) : undefined,
     usage: mapUsage(response.usage),
     totalTime: response.total_time,
-    searchResults: response.search_results,
+    searchResults: mapWeviateSearchResults(response.search_results),
   };
   return { mappedResponse, apiSearches };
 };
