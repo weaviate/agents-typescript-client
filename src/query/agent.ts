@@ -14,6 +14,8 @@ import { mapApiResponse } from "./response/api-response-mapping.js";
 import { fetchServerSentEvents } from "./response/server-sent-events.js";
 import { mapCollections, QueryAgentCollectionConfig } from "./collection.js";
 import { handleError } from "./response/error.js";
+import { QueryAgentSearcher } from "./search.js";
+import { SearchModeResponse } from "./response/response.js";
 
 /**
  * An agent for executing agentic queries against Weaviate.
@@ -185,6 +187,25 @@ export class QueryAgent {
       yield output;
     }
   }
+
+  /**
+   * Run the Query Agent search-only mode.
+   *
+   * Sends the initial search request and returns the first page of results.
+   * The returned response includes a `next` method for pagination which
+   * reuses the same underlying searches to ensure consistency across pages.
+   */
+  async search(
+    query: string,
+    { limit = 20, collections }: QueryAgentSearchOnlyOptions = {},
+  ): Promise<SearchModeResponse> {
+    const searcher = new QueryAgentSearcher(this.client, query, {
+      collections: collections ?? this.collections,
+      systemPrompt: this.systemPrompt,
+      agentsHost: this.agentsHost,
+    });
+    return searcher.run({ limit, offset: 0 });
+  }
 }
 
 /** Options for the QueryAgent. */
@@ -215,4 +236,12 @@ export type QueryAgentStreamOptions = {
   includeProgress?: boolean;
   /** Include final state in the stream. */
   includeFinalState?: boolean;
+};
+
+/** Options for the QueryAgent search-only run. */
+export type QueryAgentSearchOnlyOptions = {
+  /** The maximum number of results to return. */
+  limit?: number;
+  /** List of collections to query. Will override any collections if passed in the constructor. */
+  collections?: (string | QueryAgentCollectionConfig)[];
 };

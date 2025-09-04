@@ -1,3 +1,5 @@
+import { ReturnMetadata } from "weaviate-client";
+
 import {
   QueryAgentResponse,
   SearchResult,
@@ -9,6 +11,9 @@ import {
   StreamedTokens,
   ProgressMessage,
   DateFilterValue,
+  WeaviateObjectWithCollection,
+  WeaviateReturnWithCollection,
+  SearchModeResponse,
 } from "./response.js";
 
 import {
@@ -20,6 +25,9 @@ import {
   ApiUsage,
   ApiSource,
   ApiDateFilterValue,
+  ApiSearchModeResponse,
+  ApiWeaviateObject,
+  ApiWeaviateReturn,
 } from "./api-response.js";
 
 import { ServerSentEvent } from "./server-sent-events.js";
@@ -47,15 +55,16 @@ export const mapResponse = (
   };
 };
 
+const mapInnerSearches = (searches: ApiSearchResult[]): SearchResult[] =>
+  searches.map((result) => ({
+    collection: result.collection,
+    queries: result.queries,
+    filters: result.filters.map(mapPropertyFilters),
+    filterOperators: result.filter_operators,
+  }));
+
 const mapSearches = (searches: ApiSearchResult[][]): SearchResult[][] =>
-  searches.map((searchGroup) =>
-    searchGroup.map((result) => ({
-      collection: result.collection,
-      queries: result.queries,
-      filters: result.filters.map(mapPropertyFilters),
-      filterOperators: result.filter_operators,
-    })),
-  );
+  searches.map((searchGroup) => mapInnerSearches(searchGroup));
 
 const mapDatePropertyFilter = (
   filterValue: ApiDateFilterValue,
@@ -297,4 +306,70 @@ export const mapResponseFromSSE = (
     ...properties,
     display: () => display(properties),
   };
+};
+
+const mapWeaviateObject = (
+  object: ApiWeaviateObject,
+): WeaviateObjectWithCollection => {
+  const metadata: ReturnMetadata = {
+    creationTime:
+      object.metadata.creation_time !== null
+        ? object.metadata.creation_time
+        : undefined,
+    updateTime:
+      object.metadata.update_time !== null
+        ? object.metadata.update_time
+        : undefined,
+    distance:
+      object.metadata.distance !== null ? object.metadata.distance : undefined,
+    certainty:
+      object.metadata.certainty !== null
+        ? object.metadata.certainty
+        : undefined,
+    score: object.metadata.score !== null ? object.metadata.score : undefined,
+    explainScore:
+      object.metadata.explain_score !== null
+        ? object.metadata.explain_score
+        : undefined,
+    rerankScore:
+      object.metadata.rerank_score !== null
+        ? object.metadata.rerank_score
+        : undefined,
+    isConsistent:
+      object.metadata.is_consistent !== null
+        ? object.metadata.is_consistent
+        : undefined,
+  };
+
+  return {
+    properties: object.properties,
+    metadata,
+    references: undefined,
+    uuid: object.uuid,
+    vectors: object.vector,
+    collection: object.collection,
+  };
+};
+
+export const mapWeviateSearchResults = (
+  response: ApiWeaviateReturn,
+): WeaviateReturnWithCollection => ({
+  objects: response.objects.map(mapWeaviateObject),
+});
+
+export const mapSearchOnlyResponse = (
+  response: ApiSearchModeResponse,
+): {
+  mappedResponse: Omit<SearchModeResponse, "next">;
+  apiSearches: ApiSearchResult[] | undefined;
+} => {
+  const apiSearches = response.searches;
+  const mappedResponse: Omit<SearchModeResponse, "next"> = {
+    originalQuery: response.original_query,
+    searches: apiSearches ? mapInnerSearches(apiSearches) : undefined,
+    usage: mapUsage(response.usage),
+    totalTime: response.total_time,
+    searchResults: mapWeviateSearchResults(response.search_results),
+  };
+  return { mappedResponse, apiSearches };
 };

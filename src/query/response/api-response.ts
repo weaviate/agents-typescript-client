@@ -1,3 +1,5 @@
+import { Vectors, WeaviateField } from "weaviate-client";
+
 import {
   NumericMetrics,
   TextMetrics,
@@ -176,4 +178,43 @@ export type ApiUsage = {
 export type ApiSource = {
   object_id: string;
   collection: string;
+};
+
+export type ApiReturnMetadata = {
+  creation_time: Date | null;
+  update_time: Date | null;
+  distance: number | null;
+  certainty: number | null;
+  score: number | null;
+  explain_score: string | null;
+  rerank_score: number | null;
+  is_consistent: boolean | null;
+};
+
+export type ApiWeaviateObject = {
+  /** The returned properties of the object as untyped key-value pairs from the API. */
+  properties: Record<string, WeaviateField>;
+  /** The returned metadata of the object. */
+  metadata: ApiReturnMetadata;
+  /** The returned references of the object. */
+  references: null;
+  /** The UUID of the object. */
+  uuid: string;
+  /** The returned vectors of the object. */
+  vector: Vectors;
+  /** The collection this object belongs to. */
+  collection: string;
+};
+
+export type ApiWeaviateReturn = {
+  /** The objects that were found by the query. */
+  objects: ApiWeaviateObject[];
+};
+
+export type ApiSearchModeResponse = {
+  original_query: string;
+  searches?: ApiSearchResult[];
+  usage: ApiUsage;
+  total_time: number;
+  search_results: ApiWeaviateReturn;
 };
