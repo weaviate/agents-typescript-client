@@ -276,7 +276,7 @@ export type SearchExecutionOptions = {
   /** The maximum number of results to return. */
   limit?: number;
   /** The offset of the results to return, for paginating through query result sets. */
-  offset?: number;
+  offset: number;
 };
 
 export type SearchModeResponse = {

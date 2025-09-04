@@ -343,7 +343,7 @@ const mapWeaviateObject = (
 
   return {
     properties: object.properties,
-    metadata: metadata,
+    metadata,
     references: undefined,
     uuid: object.uuid,
     vectors: object.vector,

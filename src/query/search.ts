@@ -98,13 +98,13 @@ export class QueryAgentSearcher {
    *
    * @param [options] - Options for executing the search
    * @param [options.limit] - The maximum number of results to return. Defaults to 20 if not specified.
-   * @param [options.offset] - The offset to start from. If not specified, retrieval begins from the first object.
+   * @param [options.offset] - The offset to start from.
    * @returns A SearchModeResponse object containing the results, usage, and underlying searches performed.
    */
   async run({
     limit = 20,
-    offset = 0,
-  }: SearchExecutionOptions = {}): Promise<SearchModeResponse> {
+    offset,
+  }: SearchExecutionOptions): Promise<SearchModeResponse> {
     if (!this.collections || this.collections.length === 0) {
       throw Error("No collections provided to the query agent.");
     }
