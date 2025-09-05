@@ -12,10 +12,15 @@ import {
 } from "./response/response-mapping.js";
 import { mapApiResponse } from "./response/api-response-mapping.js";
 import { fetchServerSentEvents } from "./response/server-sent-events.js";
-import { mapCollections, QueryAgentCollectionConfig } from "./collection.js";
+import {
+  mapCollections,
+  QueryAgentCollection,
+  QueryAgentCollectionConfig,
+} from "./collection.js";
 import { handleError } from "./response/error.js";
 import { QueryAgentSearcher } from "./search.js";
 import { SearchModeResponse } from "./response/response.js";
+import { getHeaders } from "./connection.js";
 
 /**
  * An agent for executing agentic queries against Weaviate.
@@ -97,32 +102,22 @@ export class QueryAgent {
   /**
    * Ask query agent a question.
    *
-   * @param query - The natural language query string for the agent.
+   * @param query - The natural language query string or conversation context for the agent.
    * @param options - Additional options for the run.
    * @returns The response from the query agent.
    */
   async ask(
-    query: string,
+    query: QueryAgentQuery,
     { collections }: QueryAgentAskOptions = {},
   ): Promise<QueryAgentResponse> {
-    const targetCollections = collections ?? this.collections;
-    if (!targetCollections) {
-      throw Error("No collections provided to the query agent.");
-    }
-
-    const { host, bearerToken, headers } =
-      await this.client.getConnectionDetails();
+    const targetCollections = this.validateCollections(collections);
+    const { requestHeaders, connectionHeaders } = await getHeaders(this.client);
 
     const response = await fetch(`${this.agentsHost}/agent/query`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: bearerToken!,
-        "X-Weaviate-Cluster-Url": host,
-        "X-Agent-Request-Origin": "typescript-client",
-      },
+      headers: requestHeaders,
       body: JSON.stringify({
-        headers,
+        headers: connectionHeaders,
         query,
         collections: mapCollections(targetCollections),
         system_prompt: this.systemPrompt,
@@ -238,40 +233,40 @@ export class QueryAgent {
   /**
    * Ask query agent a question and stream the response.
    *
-   * @param query - The natural language query string for the agent.
+   * @param query - The natural language query string or conversation context for the agent.
    * @param options - Additional options for the run.
    * @returns The response from the query agent.
    */
   askStream(
-    query: string,
+    query: QueryAgentQuery,
     options: QueryAgentAskStreamOptions & {
       includeProgress: false;
       includeFinalState: false;
     },
   ): AsyncGenerator<StreamedTokens>;
   askStream(
-    query: string,
+    query: QueryAgentQuery,
     options: QueryAgentAskStreamOptions & {
       includeProgress: false;
       includeFinalState?: true;
     },
   ): AsyncGenerator<StreamedTokens | QueryAgentResponse>;
   askStream(
-    query: string,
+    query: QueryAgentQuery,
     options: QueryAgentAskStreamOptions & {
       includeProgress?: true;
       includeFinalState: false;
     },
   ): AsyncGenerator<ProgressMessage | StreamedTokens>;
   askStream(
-    query: string,
+    query: QueryAgentQuery,
     options?: QueryAgentAskStreamOptions & {
       includeProgress?: true;
       includeFinalState?: true;
     },
   ): AsyncGenerator<ProgressMessage | StreamedTokens | QueryAgentResponse>;
   async *askStream(
-    query: string,
+    query: QueryAgentQuery,
     {
       collections,
       includeProgress,
@@ -336,26 +331,52 @@ export class QueryAgent {
    * reuses the same underlying searches to ensure consistency across pages.
    */
   async search(
-    query: string,
+    query: QueryAgentQuery,
     { limit = 20, collections }: QueryAgentSearchOnlyOptions = {},
   ): Promise<SearchModeResponse> {
-    const searcher = new QueryAgentSearcher(this.client, query, {
-      collections: collections ?? this.collections,
-      systemPrompt: this.systemPrompt,
-      agentsHost: this.agentsHost,
-    });
+    const searcher = new QueryAgentSearcher(
+      this.client,
+      query,
+      this.validateCollections(collections),
+      this.systemPrompt,
+      this.agentsHost,
+    );
+
     return searcher.run({ limit, offset: 0 });
   }
+
+  private validateCollections = (
+    collections?: QueryAgentCollection[],
+  ): QueryAgentCollection[] => {
+    const targetCollections = collections ?? this.collections;
+
+    if (!targetCollections) {
+      throw Error("No collections provided to the query agent.");
+    }
+
+    return targetCollections;
+  };
 }
 
 /** Options for the QueryAgent. */
 export type QueryAgentOptions = {
   /** List of collections to query. Will be overriden if passed in the `run` method. */
-  collections?: (string | QueryAgentCollectionConfig)[];
+  collections?: QueryAgentCollection[];
   /** System prompt to guide the agent's behavior. */
   systemPrompt?: string;
   /** Host of the agents service. */
   agentsHost?: string;
+};
+
+export type QueryAgentQuery = string | ConversationContext;
+
+export type ConversationContext = {
+  messages: ChatMessage[];
+};
+
+export type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
 };
 
 /** Options for the QueryAgent run. */

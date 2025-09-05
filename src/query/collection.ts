@@ -12,6 +12,8 @@ export const mapCollections = (
         },
   );
 
+export type QueryAgentCollection = string | QueryAgentCollectionConfig;
+
 /** Configuration for a collection to query. */
 export type QueryAgentCollectionConfig = {
   /** The name of the collection to query. */
