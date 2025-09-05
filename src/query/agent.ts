@@ -103,7 +103,7 @@ export class QueryAgent {
    */
   async ask(
     query: string,
-    { collections, context }: QueryAgentRunOptions = {},
+    { collections }: QueryAgentAskOptions = {},
   ): Promise<QueryAgentResponse> {
     const targetCollections = collections ?? this.collections;
     if (!targetCollections) {
@@ -126,7 +126,6 @@ export class QueryAgent {
         query,
         collections: mapCollections(targetCollections),
         system_prompt: this.systemPrompt,
-        previous_response: context ? mapApiResponse(context) : undefined,
       }),
     });
 
@@ -245,28 +244,28 @@ export class QueryAgent {
    */
   askStream(
     query: string,
-    options: QueryAgentStreamOptions & {
+    options: QueryAgentAskStreamOptions & {
       includeProgress: false;
       includeFinalState: false;
     },
   ): AsyncGenerator<StreamedTokens>;
   askStream(
     query: string,
-    options: QueryAgentStreamOptions & {
+    options: QueryAgentAskStreamOptions & {
       includeProgress: false;
       includeFinalState?: true;
     },
   ): AsyncGenerator<StreamedTokens | QueryAgentResponse>;
   askStream(
     query: string,
-    options: QueryAgentStreamOptions & {
+    options: QueryAgentAskStreamOptions & {
       includeProgress?: true;
       includeFinalState: false;
     },
   ): AsyncGenerator<ProgressMessage | StreamedTokens>;
   askStream(
     query: string,
-    options?: QueryAgentStreamOptions & {
+    options?: QueryAgentAskStreamOptions & {
       includeProgress?: true;
       includeFinalState?: true;
     },
@@ -275,10 +274,9 @@ export class QueryAgent {
     query: string,
     {
       collections,
-      context,
       includeProgress,
       includeFinalState,
-    }: QueryAgentStreamOptions = {},
+    }: QueryAgentAskStreamOptions = {},
   ): AsyncGenerator<ProgressMessage | StreamedTokens | QueryAgentResponse> {
     const targetCollections = collections ?? this.collections;
 
@@ -304,7 +302,6 @@ export class QueryAgent {
           query,
           collections: mapCollections(targetCollections),
           system_prompt: this.systemPrompt,
-          previous_response: context ? mapApiResponse(context) : undefined,
           include_progress: includeProgress ?? true,
           include_final_state: includeFinalState ?? true,
         }),
@@ -369,12 +366,28 @@ export type QueryAgentRunOptions = {
   context?: QueryAgentResponse;
 };
 
+/** Options for the QueryAgent ask. */
+export type QueryAgentAskOptions = {
+  /** List of collections to query. Will override any collections if passed in the constructor. */
+  collections?: (string | QueryAgentCollectionConfig)[];
+};
+
 /** Options for the QueryAgent stream. */
 export type QueryAgentStreamOptions = {
   /** List of collections to query. Will override any collections if passed in the constructor. */
   collections?: (string | QueryAgentCollectionConfig)[];
   /** Previous response from the agent. */
   context?: QueryAgentResponse;
+  /** Include progress messages in the stream. */
+  includeProgress?: boolean;
+  /** Include final state in the stream. */
+  includeFinalState?: boolean;
+};
+
+/** Options for the QueryAgent askStream. */
+export type QueryAgentAskStreamOptions = {
+  /** List of collections to query. Will override any collections if passed in the constructor. */
+  collections?: (string | QueryAgentCollectionConfig)[];
   /** Include progress messages in the stream. */
   includeProgress?: boolean;
   /** Include final state in the stream. */
