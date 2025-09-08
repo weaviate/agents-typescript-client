@@ -4,12 +4,15 @@ import {
   SearchModeResponse,
 } from "./response/response.js";
 import { mapSearchOnlyResponse } from "./response/response-mapping.js";
-import { mapCollections, QueryAgentCollectionConfig } from "./collection.js";
+import { mapCollections } from "./collection.js";
 import { handleError } from "./response/error.js";
 import {
   ApiSearchModeResponse,
   ApiSearchResult,
 } from "./response/api-response.js";
+import { QueryAgentQuery } from "./agent.js";
+import { QueryAgentCollection } from "./collection.js";
+import { getHeaders } from "./connection.js";
 
 /**
  * A configured searcher for the QueryAgent.
@@ -25,44 +28,15 @@ import {
  * For more information, see the [Weaviate Query Agent Docs](https://weaviate.io/developers/agents/query)
  */
 export class QueryAgentSearcher {
-  private agentsHost: string;
-  private query: string;
-  private collections: (string | QueryAgentCollectionConfig)[];
-  private systemPrompt?: string;
   private cachedSearches?: ApiSearchResult[];
 
   constructor(
     private client: WeaviateClient,
-    query: string,
-    {
-      collections = [],
-      systemPrompt,
-      agentsHost = "https://api.agents.weaviate.io",
-    }: {
-      collections?: (string | QueryAgentCollectionConfig)[];
-      systemPrompt?: string;
-      agentsHost?: string;
-    } = {},
-  ) {
-    this.query = query;
-    this.collections = collections;
-    this.systemPrompt = systemPrompt;
-    this.agentsHost = agentsHost;
-    this.cachedSearches = undefined;
-  }
-
-  private async getHeaders() {
-    const { host, bearerToken, headers } =
-      await this.client.getConnectionDetails();
-    const requestHeaders = {
-      "Content-Type": "application/json",
-      Authorization: bearerToken!,
-      "X-Weaviate-Cluster-Url": host,
-      "X-Agent-Request-Origin": "typescript-client",
-    };
-    const connectionHeaders = headers;
-    return { requestHeaders, connectionHeaders };
-  }
+    private query: QueryAgentQuery,
+    private collections: QueryAgentCollection[],
+    private systemPrompt: string | undefined,
+    private agentsHost: string,
+  ) {}
 
   private buildRequestBody(
     limit: number,
@@ -71,7 +45,8 @@ export class QueryAgentSearcher {
   ) {
     const base = {
       headers: connectionHeaders,
-      original_query: this.query,
+      original_query:
+        typeof this.query === "string" ? this.query : { messages: this.query },
       collections: mapCollections(this.collections),
       limit,
       offset,
@@ -108,7 +83,7 @@ export class QueryAgentSearcher {
     if (!this.collections || this.collections.length === 0) {
       throw Error("No collections provided to the query agent.");
     }
-    const { requestHeaders, connectionHeaders } = await this.getHeaders();
+    const { requestHeaders, connectionHeaders } = await getHeaders(this.client);
 
     const response = await fetch(`${this.agentsHost}/agent/search_only`, {
       method: "POST",
