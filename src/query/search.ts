@@ -45,7 +45,8 @@ export class QueryAgentSearcher {
   ) {
     const base = {
       headers: connectionHeaders,
-      original_query: this.query,
+      original_query:
+        typeof this.query === "string" ? this.query : { messages: this.query },
       collections: mapCollections(this.collections),
       limit,
       offset,

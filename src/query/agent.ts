@@ -118,7 +118,7 @@ export class QueryAgent {
       headers: requestHeaders,
       body: JSON.stringify({
         headers: connectionHeaders,
-        query,
+        query: typeof query === "string" ? query : { messages: query },
         collections: mapCollections(targetCollections),
         system_prompt: this.systemPrompt,
       }),
@@ -294,7 +294,7 @@ export class QueryAgent {
         },
         body: JSON.stringify({
           headers,
-          query,
+          query: typeof query === "string" ? query : { messages: query },
           collections: mapCollections(targetCollections),
           system_prompt: this.systemPrompt,
           include_progress: includeProgress ?? true,
@@ -368,11 +368,7 @@ export type QueryAgentOptions = {
   agentsHost?: string;
 };
 
-export type QueryAgentQuery = string | ConversationContext;
-
-export type ConversationContext = {
-  messages: ChatMessage[];
-};
+export type QueryAgentQuery = string | ChatMessage[];
 
 export type ChatMessage = {
   role: "user" | "assistant";
