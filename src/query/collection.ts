@@ -1,3 +1,6 @@
+import { FilterValue } from "weaviate-client";
+import { mapFilter } from "./filter.js";
+
 export const mapCollections = (
   collections: (string | QueryAgentCollectionConfig)[],
 ) =>
@@ -6,9 +9,12 @@ export const mapCollections = (
       ? collection
       : {
           name: collection.name,
+          tenant: collection.tenant,
           view_properties: collection.viewProperties,
           target_vector: collection.targetVector,
-          tenant: collection.tenant,
+          additional_filters: collection.additionalFilters
+            ? mapFilter(collection.additionalFilters)
+            : undefined,
         },
   );
 
@@ -24,4 +30,6 @@ export type QueryAgentCollectionConfig = {
   viewProperties?: string[];
   /** Target vector for the query if a collection uses named vector. */
   targetVector?: string | string[];
+  /** Filters to apply to apply when query is executed, in addition to filters selected by the Query Agent. */
+  additionalFilters?: FilterValue;
 };
