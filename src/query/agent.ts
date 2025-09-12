@@ -223,7 +223,7 @@ export class QueryAgent {
       } else if (event.event === "streamed_tokens") {
         output = mapStreamedTokensFromSSE(event);
       } else if (event.event === "final_state") {
-        output = mapResponseFromSSE(event);
+        output = mapResponse(JSON.parse(event.data));
       } else {
         throw new Error(`Unexpected event type: ${event.event}: ${event.data}`);
       }
@@ -252,7 +252,7 @@ export class QueryAgent {
       includeProgress: false;
       includeFinalState?: true;
     },
-  ): AsyncGenerator<StreamedTokens | QueryAgentResponse>;
+  ): AsyncGenerator<StreamedTokens | AskModeResponse>;
   askStream(
     query: QueryAgentQuery,
     options: QueryAgentAskStreamOptions & {
@@ -266,7 +266,7 @@ export class QueryAgent {
       includeProgress?: true;
       includeFinalState?: true;
     },
-  ): AsyncGenerator<ProgressMessage | StreamedTokens | QueryAgentResponse>;
+  ): AsyncGenerator<ProgressMessage | StreamedTokens | AskModeResponse>;
   async *askStream(
     query: QueryAgentQuery,
     {
@@ -274,7 +274,7 @@ export class QueryAgent {
       includeProgress,
       includeFinalState,
     }: QueryAgentAskStreamOptions = {},
-  ): AsyncGenerator<ProgressMessage | StreamedTokens | QueryAgentResponse> {
+  ): AsyncGenerator<ProgressMessage | StreamedTokens | AskModeResponse> {
     const targetCollections = collections ?? this.collections;
 
     if (!targetCollections) {
@@ -285,7 +285,7 @@ export class QueryAgent {
       await this.client.getConnectionDetails();
 
     const sseStream = fetchServerSentEvents(
-      `${this.agentsHost}/agent/stream_query`,
+      `${this.agentsHost}/query/stream_ask`,
       {
         method: "POST",
         headers: {
@@ -310,13 +310,13 @@ export class QueryAgent {
         await handleError(event.data);
       }
 
-      let output: ProgressMessage | StreamedTokens | QueryAgentResponse;
+      let output: ProgressMessage | StreamedTokens | AskModeResponse;
       if (event.event === "progress_message") {
         output = mapProgressMessageFromSSE(event);
       } else if (event.event === "streamed_tokens") {
         output = mapStreamedTokensFromSSE(event);
       } else if (event.event === "final_state") {
-        output = mapResponseFromSSE(event);
+        output = mapAskModeResponse(JSON.parse(event.data));
       } else {
         throw new Error(`Unexpected event type: ${event.event}: ${event.data}`);
       }
