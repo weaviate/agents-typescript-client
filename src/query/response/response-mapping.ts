@@ -2,11 +2,9 @@ import { ReturnMetadata } from "weaviate-client";
 
 import {
   QueryAgentResponse,
-  SearchResult,
   PropertyFilter,
   AggregationResult,
   PropertyAggregation,
-  Usage,
   Source,
   StreamedTokens,
   ProgressMessage,
@@ -14,23 +12,68 @@ import {
   WeaviateObjectWithCollection,
   WeaviateReturnWithCollection,
   SearchModeResponse,
+  FilterAndOr,
+  AskModeResponse,
+  Search,
+  ModelUnitUsage,
 } from "./response.js";
 
 import {
   ApiQueryAgentResponse,
-  ApiSearchResult,
   ApiPropertyFilter,
   ApiAggregationResult,
   ApiPropertyAggregation,
-  ApiUsage,
   ApiSource,
   ApiDateFilterValue,
   ApiSearchModeResponse,
   ApiWeaviateObject,
   ApiWeaviateReturn,
+  ApiFilterAndOr,
+  ApiAskModeResponse,
+  ApiSearch,
+  ApiModelUnitUsage,
 } from "./api-response.js";
 
 import { ServerSentEvent } from "./server-sent-events.js";
+
+export const mapAskModeResponse = (
+  response: ApiAskModeResponse,
+): AskModeResponse => {
+  const properties: AskModeResponseProperties = {
+    outputType: "finalState",
+    searches: mapSearches(response.searches),
+    aggregations: response.aggregations.map((aggregation) => ({
+      groupbyProperty: aggregation.groupby_property,
+      aggregation: mapPropertyAggregation(aggregation.aggregation),
+      filters: aggregation.filters ? mapFilter(aggregation.filters) : undefined,
+      collection: aggregation.collection,
+    })),
+    usage: mapUsage(response.usage),
+    totalTime: response.total_time,
+    isPartialAnswer: response.is_partial_answer,
+    missingInformation: response.missing_information,
+    finalAnswer: response.final_answer,
+    sources: response.sources ? mapSources(response.sources) : undefined,
+  };
+
+  return {
+    ...properties,
+    display: () => display(properties),
+  };
+};
+
+const mapSearches = (searches: ApiSearch[]): Search[] =>
+  searches.map((search) => ({
+    query: search.query,
+    filters: search.filters ? mapFilter(search.filters) : undefined,
+    collection: search.collection,
+  }));
+
+const mapUsage = (usage: ApiModelUnitUsage): ModelUnitUsage => ({
+  modelUnits: usage.model_units,
+  usageInPlan: usage.usage_in_plan,
+  remainingPlanRequests: usage.remaining_plan_requests,
+});
 
 export const mapResponse = (
   response: ApiQueryAgentResponse,
@@ -39,9 +82,22 @@ export const mapResponse = (
     outputType: "finalState",
     originalQuery: response.original_query,
     collectionNames: response.collection_names,
-    searches: mapSearches(response.searches),
+    searches: response.searches.map((searches) =>
+      searches.map((result) => ({
+        collection: result.collection,
+        queries: result.queries,
+        filters: result.filters.map((filter) => filter.map(mapPropertyFilter)),
+        filterOperators: result.filter_operators,
+      })),
+    ),
     aggregations: mapAggregations(response.aggregations),
-    usage: mapUsage(response.usage),
+    usage: {
+      requests: response.usage.requests,
+      requestTokens: response.usage.request_tokens,
+      responseTokens: response.usage.response_tokens,
+      totalTokens: response.usage.total_tokens,
+      details: response.usage.details,
+    },
     totalTime: response.total_time,
     isPartialAnswer: response.is_partial_answer,
     missingInformation: response.missing_information,
@@ -54,17 +110,6 @@ export const mapResponse = (
     display: () => display(properties),
   };
 };
-
-const mapInnerSearches = (searches: ApiSearchResult[]): SearchResult[] =>
-  searches.map((result) => ({
-    collection: result.collection,
-    queries: result.queries,
-    filters: result.filters.map(mapPropertyFilters),
-    filterOperators: result.filter_operators,
-  }));
-
-const mapSearches = (searches: ApiSearchResult[][]): SearchResult[][] =>
-  searches.map((searchGroup) => mapInnerSearches(searchGroup));
 
 const mapDatePropertyFilter = (
   filterValue: ApiDateFilterValue,
@@ -100,102 +145,112 @@ const mapDatePropertyFilter = (
   return undefined;
 };
 
-const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
-  filters.map((filter) => {
-    switch (filter.filter_type) {
-      case "integer":
-        return {
-          filterType: "integer",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
+const mapFilter = (
+  filter: ApiPropertyFilter | ApiFilterAndOr,
+): PropertyFilter | FilterAndOr =>
+  multiFilter(filter)
+    ? { combine: filter.combine, filters: filter.filters.map(mapFilter) }
+    : mapPropertyFilter(filter);
 
-      case "integer_array":
-        return {
-          filterType: "integerArray",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
+const mapPropertyFilter = (filter: ApiPropertyFilter): PropertyFilter => {
+  switch (filter.filter_type) {
+    case "integer":
+      return {
+        filterType: "integer",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
 
-      case "text":
-        return {
-          filterType: "text",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
+    case "integer_array":
+      return {
+        filterType: "integerArray",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
 
-      case "text_array":
-        return {
-          filterType: "textArray",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
+    case "text":
+      return {
+        filterType: "text",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
 
-      case "boolean":
-        return {
-          filterType: "boolean",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
+    case "text_array":
+      return {
+        filterType: "textArray",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
 
-      case "boolean_array":
-        return {
-          filterType: "booleanArray",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
+    case "boolean":
+      return {
+        filterType: "boolean",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
 
-      case "date_range":
-        const value = mapDatePropertyFilter(filter.value);
-        if (!value) {
-          return {
-            filterType: "unknown",
-            propertyName: (filter as ApiPropertyFilter).property_name,
-          };
-        }
-        return {
-          filterType: "dateRange",
-          propertyName: filter.property_name,
-          value,
-        };
+    case "boolean_array":
+      return {
+        filterType: "booleanArray",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
 
-      case "date_array":
-        return {
-          filterType: "dateArray",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
-
-      case "geo":
-        return {
-          filterType: "geo",
-          propertyName: filter.property_name,
-          latitude: filter.latitude,
-          longitude: filter.longitude,
-          maxDistanceMeters: filter.max_distance_meters,
-        };
-
-      case "is_null":
-        return {
-          filterType: "isNull",
-          propertyName: filter.property_name,
-          isNull: filter.is_null,
-        };
-
-      default:
+    case "date_range":
+      const value = mapDatePropertyFilter(filter.value);
+      if (!value) {
         return {
           filterType: "unknown",
           propertyName: (filter as ApiPropertyFilter).property_name,
         };
-    }
-  });
+      }
+      return {
+        filterType: "dateRange",
+        propertyName: filter.property_name,
+        value,
+      };
+
+    case "date_array":
+      return {
+        filterType: "dateArray",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
+
+    case "geo":
+      return {
+        filterType: "geo",
+        propertyName: filter.property_name,
+        latitude: filter.latitude,
+        longitude: filter.longitude,
+        maxDistanceMeters: filter.max_distance_meters,
+      };
+
+    case "is_null":
+      return {
+        filterType: "isNull",
+        propertyName: filter.property_name,
+        isNull: filter.is_null,
+      };
+
+    default:
+      return {
+        filterType: "unknown",
+        propertyName: (filter as ApiPropertyFilter).property_name,
+      };
+  }
+};
+
+const multiFilter = (
+  filter: ApiPropertyFilter | ApiFilterAndOr,
+): filter is ApiFilterAndOr => "combine" in filter;
 
 const mapAggregations = (
   aggregations: ApiAggregationResult[][],
@@ -206,7 +261,7 @@ const mapAggregations = (
       searchQuery: result.search_query,
       groupbyProperty: result.groupby_property,
       aggregations: result.aggregations.map(mapPropertyAggregation),
-      filters: mapPropertyFilters(result.filters),
+      filters: result.filters.map(mapPropertyFilter),
     })),
   );
 
@@ -221,24 +276,17 @@ const mapPropertyAggregation = (
       : undefined,
 });
 
-const mapUsage = (usage: ApiUsage): Usage => ({
-  requests: usage.requests,
-  requestTokens: usage.request_tokens,
-  responseTokens: usage.response_tokens,
-  totalTokens: usage.total_tokens,
-  details: usage.details,
-});
-
 const mapSources = (sources: ApiSource[]): Source[] =>
   sources.map((source) => ({
     objectId: source.object_id,
     collection: source.collection,
   }));
 
-const display = (response: ResponseProperties) => {
+const display = (response: AskModeResponseProperties | ResponseProperties) => {
   console.log(JSON.stringify(response, undefined, 2));
 };
 
+type AskModeResponseProperties = Omit<AskModeResponse, "display">;
 type ResponseProperties = Omit<QueryAgentResponse, "display">;
 
 type ProgressMessageJSON = Omit<ProgressMessage, "outputType"> & {
@@ -280,31 +328,6 @@ export const mapStreamedTokensFromSSE = (
   return {
     outputType: "streamedTokens",
     delta: data.delta,
-  };
-};
-
-export const mapResponseFromSSE = (
-  sse: ServerSentEvent,
-): QueryAgentResponse => {
-  const data: ApiQueryAgentResponse = JSON.parse(sse.data);
-
-  const properties: ResponseProperties = {
-    outputType: "finalState",
-    originalQuery: data.original_query,
-    collectionNames: data.collection_names,
-    searches: mapSearches(data.searches),
-    aggregations: mapAggregations(data.aggregations),
-    usage: mapUsage(data.usage),
-    totalTime: data.total_time,
-    isPartialAnswer: data.is_partial_answer,
-    missingInformation: data.missing_information,
-    finalAnswer: data.final_answer,
-    sources: mapSources(data.sources),
-  };
-
-  return {
-    ...properties,
-    display: () => display(properties),
   };
 };
 
@@ -361,12 +384,11 @@ export const mapSearchOnlyResponse = (
   response: ApiSearchModeResponse,
 ): {
   mappedResponse: Omit<SearchModeResponse, "next">;
-  apiSearches: ApiSearchResult[] | undefined;
+  apiSearches: ApiSearch[] | undefined;
 } => {
   const apiSearches = response.searches;
   const mappedResponse: Omit<SearchModeResponse, "next"> = {
-    originalQuery: response.original_query,
-    searches: apiSearches ? mapInnerSearches(apiSearches) : undefined,
+    searches: apiSearches ? mapSearches(apiSearches) : undefined,
     usage: mapUsage(response.usage),
     totalTime: response.total_time,
     searchResults: mapWeviateSearchResults(response.search_results),

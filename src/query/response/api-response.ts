@@ -8,6 +8,41 @@ import {
   ComparisonOperator,
 } from "./response.js";
 
+export type ApiAskModeResponse = {
+  searches: ApiSearch[];
+  aggregations: ApiAggregation[];
+  usage: ApiModelUnitUsage;
+  total_time: number;
+  is_partial_answer?: boolean;
+  missing_information?: string[];
+  final_answer: string;
+  sources?: ApiSource[];
+};
+
+export type ApiSearch = {
+  query?: string;
+  filters?: ApiPropertyFilter | ApiFilterAndOr;
+  collection: string;
+};
+
+export type ApiAggregation = {
+  groupby_property?: string;
+  aggregation: ApiPropertyAggregation;
+  filters?: ApiPropertyFilter | ApiFilterAndOr;
+  collection: string;
+};
+
+export type ApiFilterAndOr = {
+  combine: "AND" | "OR";
+  filters: (ApiPropertyFilter | ApiFilterAndOr)[];
+};
+
+export type ApiModelUnitUsage = {
+  model_units: number;
+  usage_in_plan: boolean;
+  remaining_plan_requests: number;
+};
+
 export type ApiQueryAgentResponse = {
   original_query: string;
   collection_names: string[];
@@ -212,9 +247,8 @@ export type ApiWeaviateReturn = {
 };
 
 export type ApiSearchModeResponse = {
-  original_query: string;
-  searches?: ApiSearchResult[];
-  usage: ApiUsage;
+  searches?: ApiSearch[];
+  usage: ApiModelUnitUsage;
   total_time: number;
   search_results: ApiWeaviateReturn;
 };
