@@ -3,12 +3,14 @@ import {
   QueryAgentResponse,
   ProgressMessage,
   StreamedTokens,
+  AskModeResponse,
 } from "./response/response.js";
 import {
   mapResponse,
   mapProgressMessageFromSSE,
   mapStreamedTokensFromSSE,
   mapResponseFromSSE,
+  mapAskModeResponse,
 } from "./response/response-mapping.js";
 import { mapApiResponse } from "./response/api-response-mapping.js";
 import { fetchServerSentEvents } from "./response/server-sent-events.js";
@@ -109,11 +111,11 @@ export class QueryAgent {
   async ask(
     query: QueryAgentQuery,
     { collections }: QueryAgentAskOptions = {},
-  ): Promise<QueryAgentResponse> {
+  ): Promise<AskModeResponse> {
     const targetCollections = this.validateCollections(collections);
     const { requestHeaders, connectionHeaders } = await getHeaders(this.client);
 
-    const response = await fetch(`${this.agentsHost}/agent/query`, {
+    const response = await fetch(`${this.agentsHost}/query/ask`, {
       method: "POST",
       headers: requestHeaders,
       body: JSON.stringify({
@@ -128,7 +130,7 @@ export class QueryAgent {
       await handleError(await response.text());
     }
 
-    return mapResponse(await response.json());
+    return mapAskModeResponse(await response.json());
   }
 
   /**

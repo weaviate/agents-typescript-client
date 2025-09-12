@@ -14,6 +14,8 @@ import {
   WeaviateObjectWithCollection,
   WeaviateReturnWithCollection,
   SearchModeResponse,
+  FilterAndOr,
+  AskModeResponse,
 } from "./response.js";
 
 import {
@@ -28,9 +30,45 @@ import {
   ApiSearchModeResponse,
   ApiWeaviateObject,
   ApiWeaviateReturn,
+  ApiFilterAndOr,
+  ApiAskModeResponse,
 } from "./api-response.js";
 
 import { ServerSentEvent } from "./server-sent-events.js";
+
+export const mapAskModeResponse = (
+  response: ApiAskModeResponse,
+): AskModeResponse => {
+  const properties: AskModeResponseProperties = {
+    outputType: "finalState",
+    searches: response.searches.map((search) => ({
+      query: search.query,
+      filters: search.filters ? mapFilter(search.filters) : undefined,
+      collection: search.collection,
+    })),
+    aggregations: response.aggregations.map((aggregation) => ({
+      groupbyProperty: aggregation.groupby_property,
+      aggregation: mapPropertyAggregation(aggregation.aggregation),
+      filters: aggregation.filters ? mapFilter(aggregation.filters) : undefined,
+      collection: aggregation.collection,
+    })),
+    usage: {
+      modelUnits: response.usage.model_units,
+      usageInPlan: response.usage.usage_in_plan,
+      remainingPlanRequests: response.usage.remaining_plan_requests,
+    },
+    totalTime: response.total_time,
+    isPartialAnswer: response.is_partial_answer,
+    missingInformation: response.missing_information,
+    finalAnswer: response.final_answer,
+    sources: response.sources ? mapSources(response.sources) : undefined,
+  };
+
+  return {
+    ...properties,
+    display: () => display(properties),
+  };
+};
 
 export const mapResponse = (
   response: ApiQueryAgentResponse,
@@ -59,7 +97,7 @@ const mapInnerSearches = (searches: ApiSearchResult[]): SearchResult[] =>
   searches.map((result) => ({
     collection: result.collection,
     queries: result.queries,
-    filters: result.filters.map(mapPropertyFilters),
+    filters: result.filters.map((filter) => filter.map(mapPropertyFilter)),
     filterOperators: result.filter_operators,
   }));
 
@@ -100,102 +138,112 @@ const mapDatePropertyFilter = (
   return undefined;
 };
 
-const mapPropertyFilters = (filters: ApiPropertyFilter[]): PropertyFilter[] =>
-  filters.map((filter) => {
-    switch (filter.filter_type) {
-      case "integer":
-        return {
-          filterType: "integer",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
+const mapFilter = (
+  filter: ApiPropertyFilter | ApiFilterAndOr,
+): PropertyFilter | FilterAndOr =>
+  multiFilter(filter)
+    ? { combine: filter.combine, filters: filter.filters.map(mapFilter) }
+    : mapPropertyFilter(filter);
 
-      case "integer_array":
-        return {
-          filterType: "integerArray",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
+const mapPropertyFilter = (filter: ApiPropertyFilter): PropertyFilter => {
+  switch (filter.filter_type) {
+    case "integer":
+      return {
+        filterType: "integer",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
 
-      case "text":
-        return {
-          filterType: "text",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
+    case "integer_array":
+      return {
+        filterType: "integerArray",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
 
-      case "text_array":
-        return {
-          filterType: "textArray",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
+    case "text":
+      return {
+        filterType: "text",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
 
-      case "boolean":
-        return {
-          filterType: "boolean",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
+    case "text_array":
+      return {
+        filterType: "textArray",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
 
-      case "boolean_array":
-        return {
-          filterType: "booleanArray",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
+    case "boolean":
+      return {
+        filterType: "boolean",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
 
-      case "date_range":
-        const value = mapDatePropertyFilter(filter.value);
-        if (!value) {
-          return {
-            filterType: "unknown",
-            propertyName: (filter as ApiPropertyFilter).property_name,
-          };
-        }
-        return {
-          filterType: "dateRange",
-          propertyName: filter.property_name,
-          value,
-        };
+    case "boolean_array":
+      return {
+        filterType: "booleanArray",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
 
-      case "date_array":
-        return {
-          filterType: "dateArray",
-          propertyName: filter.property_name,
-          operator: filter.operator,
-          value: filter.value,
-        };
-
-      case "geo":
-        return {
-          filterType: "geo",
-          propertyName: filter.property_name,
-          latitude: filter.latitude,
-          longitude: filter.longitude,
-          maxDistanceMeters: filter.max_distance_meters,
-        };
-
-      case "is_null":
-        return {
-          filterType: "isNull",
-          propertyName: filter.property_name,
-          isNull: filter.is_null,
-        };
-
-      default:
+    case "date_range":
+      const value = mapDatePropertyFilter(filter.value);
+      if (!value) {
         return {
           filterType: "unknown",
           propertyName: (filter as ApiPropertyFilter).property_name,
         };
-    }
-  });
+      }
+      return {
+        filterType: "dateRange",
+        propertyName: filter.property_name,
+        value,
+      };
+
+    case "date_array":
+      return {
+        filterType: "dateArray",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
+
+    case "geo":
+      return {
+        filterType: "geo",
+        propertyName: filter.property_name,
+        latitude: filter.latitude,
+        longitude: filter.longitude,
+        maxDistanceMeters: filter.max_distance_meters,
+      };
+
+    case "is_null":
+      return {
+        filterType: "isNull",
+        propertyName: filter.property_name,
+        isNull: filter.is_null,
+      };
+
+    default:
+      return {
+        filterType: "unknown",
+        propertyName: (filter as ApiPropertyFilter).property_name,
+      };
+  }
+};
+
+const multiFilter = (
+  filter: ApiPropertyFilter | ApiFilterAndOr,
+): filter is ApiFilterAndOr => "combine" in filter;
 
 const mapAggregations = (
   aggregations: ApiAggregationResult[][],
@@ -206,7 +254,7 @@ const mapAggregations = (
       searchQuery: result.search_query,
       groupbyProperty: result.groupby_property,
       aggregations: result.aggregations.map(mapPropertyAggregation),
-      filters: mapPropertyFilters(result.filters),
+      filters: result.filters.map(mapPropertyFilter),
     })),
   );
 
@@ -235,10 +283,11 @@ const mapSources = (sources: ApiSource[]): Source[] =>
     collection: source.collection,
   }));
 
-const display = (response: ResponseProperties) => {
+const display = (response: AskModeResponseProperties | ResponseProperties) => {
   console.log(JSON.stringify(response, undefined, 2));
 };
 
+type AskModeResponseProperties = Omit<AskModeResponse, "display">;
 type ResponseProperties = Omit<QueryAgentResponse, "display">;
 
 type ProgressMessageJSON = Omit<ProgressMessage, "outputType"> & {
