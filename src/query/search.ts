@@ -6,10 +6,7 @@ import {
 import { mapSearchOnlyResponse } from "./response/response-mapping.js";
 import { mapCollections } from "./collection.js";
 import { handleError } from "./response/error.js";
-import {
-  ApiSearchModeResponse,
-  ApiSearchResult,
-} from "./response/api-response.js";
+import { ApiSearch, ApiSearchModeResponse } from "./response/api-response.js";
 import { QueryAgentQuery } from "./agent.js";
 import { QueryAgentCollection } from "./collection.js";
 import { getHeaders } from "./connection.js";
@@ -28,7 +25,7 @@ import { getHeaders } from "./connection.js";
  * For more information, see the [Weaviate Query Agent Docs](https://weaviate.io/developers/agents/query)
  */
 export class QueryAgentSearcher {
-  private cachedSearches?: ApiSearchResult[];
+  private cachedSearches?: ApiSearch[];
 
   constructor(
     private client: WeaviateClient,
@@ -85,7 +82,7 @@ export class QueryAgentSearcher {
     }
     const { requestHeaders, connectionHeaders } = await getHeaders(this.client);
 
-    const response = await fetch(`${this.agentsHost}/agent/search_only`, {
+    const response = await fetch(`${this.agentsHost}/query/search_only`, {
       method: "POST",
       headers: requestHeaders,
       body: JSON.stringify(

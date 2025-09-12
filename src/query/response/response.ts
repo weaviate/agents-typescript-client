@@ -317,9 +317,8 @@ export type SearchExecutionOptions = {
 };
 
 export type SearchModeResponse = {
-  originalQuery: string;
-  searches?: SearchResult[];
-  usage: Usage;
+  searches?: Search[];
+  usage: ModelUnitUsage;
   totalTime: number;
   searchResults: WeaviateReturnWithCollection;
   next: (options: SearchExecutionOptions) => Promise<SearchModeResponse>;

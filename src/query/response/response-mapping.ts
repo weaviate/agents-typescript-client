@@ -2,11 +2,9 @@ import { ReturnMetadata } from "weaviate-client";
 
 import {
   QueryAgentResponse,
-  SearchResult,
   PropertyFilter,
   AggregationResult,
   PropertyAggregation,
-  Usage,
   Source,
   StreamedTokens,
   ProgressMessage,
@@ -16,15 +14,15 @@ import {
   SearchModeResponse,
   FilterAndOr,
   AskModeResponse,
+  Search,
+  ModelUnitUsage,
 } from "./response.js";
 
 import {
   ApiQueryAgentResponse,
-  ApiSearchResult,
   ApiPropertyFilter,
   ApiAggregationResult,
   ApiPropertyAggregation,
-  ApiUsage,
   ApiSource,
   ApiDateFilterValue,
   ApiSearchModeResponse,
@@ -32,6 +30,8 @@ import {
   ApiWeaviateReturn,
   ApiFilterAndOr,
   ApiAskModeResponse,
+  ApiSearch,
+  ApiModelUnitUsage,
 } from "./api-response.js";
 
 import { ServerSentEvent } from "./server-sent-events.js";
@@ -41,22 +41,14 @@ export const mapAskModeResponse = (
 ): AskModeResponse => {
   const properties: AskModeResponseProperties = {
     outputType: "finalState",
-    searches: response.searches.map((search) => ({
-      query: search.query,
-      filters: search.filters ? mapFilter(search.filters) : undefined,
-      collection: search.collection,
-    })),
+    searches: mapSearches(response.searches),
     aggregations: response.aggregations.map((aggregation) => ({
       groupbyProperty: aggregation.groupby_property,
       aggregation: mapPropertyAggregation(aggregation.aggregation),
       filters: aggregation.filters ? mapFilter(aggregation.filters) : undefined,
       collection: aggregation.collection,
     })),
-    usage: {
-      modelUnits: response.usage.model_units,
-      usageInPlan: response.usage.usage_in_plan,
-      remainingPlanRequests: response.usage.remaining_plan_requests,
-    },
+    usage: mapUsage(response.usage),
     totalTime: response.total_time,
     isPartialAnswer: response.is_partial_answer,
     missingInformation: response.missing_information,
@@ -70,6 +62,19 @@ export const mapAskModeResponse = (
   };
 };
 
+const mapSearches = (searches: ApiSearch[]): Search[] =>
+  searches.map((search) => ({
+    query: search.query,
+    filters: search.filters ? mapFilter(search.filters) : undefined,
+    collection: search.collection,
+  }));
+
+const mapUsage = (usage: ApiModelUnitUsage): ModelUnitUsage => ({
+  modelUnits: usage.model_units,
+  usageInPlan: usage.usage_in_plan,
+  remainingPlanRequests: usage.remaining_plan_requests,
+});
+
 export const mapResponse = (
   response: ApiQueryAgentResponse,
 ): QueryAgentResponse => {
@@ -77,9 +82,22 @@ export const mapResponse = (
     outputType: "finalState",
     originalQuery: response.original_query,
     collectionNames: response.collection_names,
-    searches: mapSearches(response.searches),
+    searches: response.searches.map((searches) =>
+      searches.map((result) => ({
+        collection: result.collection,
+        queries: result.queries,
+        filters: result.filters.map((filter) => filter.map(mapPropertyFilter)),
+        filterOperators: result.filter_operators,
+      })),
+    ),
     aggregations: mapAggregations(response.aggregations),
-    usage: mapUsage(response.usage),
+    usage: {
+      requests: response.usage.requests,
+      requestTokens: response.usage.request_tokens,
+      responseTokens: response.usage.response_tokens,
+      totalTokens: response.usage.total_tokens,
+      details: response.usage.details,
+    },
     totalTime: response.total_time,
     isPartialAnswer: response.is_partial_answer,
     missingInformation: response.missing_information,
@@ -92,17 +110,6 @@ export const mapResponse = (
     display: () => display(properties),
   };
 };
-
-const mapInnerSearches = (searches: ApiSearchResult[]): SearchResult[] =>
-  searches.map((result) => ({
-    collection: result.collection,
-    queries: result.queries,
-    filters: result.filters.map((filter) => filter.map(mapPropertyFilter)),
-    filterOperators: result.filter_operators,
-  }));
-
-const mapSearches = (searches: ApiSearchResult[][]): SearchResult[][] =>
-  searches.map((searchGroup) => mapInnerSearches(searchGroup));
 
 const mapDatePropertyFilter = (
   filterValue: ApiDateFilterValue,
@@ -269,14 +276,6 @@ const mapPropertyAggregation = (
       : undefined,
 });
 
-const mapUsage = (usage: ApiUsage): Usage => ({
-  requests: usage.requests,
-  requestTokens: usage.request_tokens,
-  responseTokens: usage.response_tokens,
-  totalTokens: usage.total_tokens,
-  details: usage.details,
-});
-
 const mapSources = (sources: ApiSource[]): Source[] =>
   sources.map((source) => ({
     objectId: source.object_id,
@@ -329,31 +328,6 @@ export const mapStreamedTokensFromSSE = (
   return {
     outputType: "streamedTokens",
     delta: data.delta,
-  };
-};
-
-export const mapResponseFromSSE = (
-  sse: ServerSentEvent,
-): QueryAgentResponse => {
-  const data: ApiQueryAgentResponse = JSON.parse(sse.data);
-
-  const properties: ResponseProperties = {
-    outputType: "finalState",
-    originalQuery: data.original_query,
-    collectionNames: data.collection_names,
-    searches: mapSearches(data.searches),
-    aggregations: mapAggregations(data.aggregations),
-    usage: mapUsage(data.usage),
-    totalTime: data.total_time,
-    isPartialAnswer: data.is_partial_answer,
-    missingInformation: data.missing_information,
-    finalAnswer: data.final_answer,
-    sources: mapSources(data.sources),
-  };
-
-  return {
-    ...properties,
-    display: () => display(properties),
   };
 };
 
@@ -410,12 +384,11 @@ export const mapSearchOnlyResponse = (
   response: ApiSearchModeResponse,
 ): {
   mappedResponse: Omit<SearchModeResponse, "next">;
-  apiSearches: ApiSearchResult[] | undefined;
+  apiSearches: ApiSearch[] | undefined;
 } => {
   const apiSearches = response.searches;
   const mappedResponse: Omit<SearchModeResponse, "next"> = {
-    originalQuery: response.original_query,
-    searches: apiSearches ? mapInnerSearches(apiSearches) : undefined,
+    searches: apiSearches ? mapSearches(apiSearches) : undefined,
     usage: mapUsage(response.usage),
     totalTime: response.total_time,
     searchResults: mapWeviateSearchResults(response.search_results),

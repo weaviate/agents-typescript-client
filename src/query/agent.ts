@@ -9,7 +9,6 @@ import {
   mapResponse,
   mapProgressMessageFromSSE,
   mapStreamedTokensFromSSE,
-  mapResponseFromSSE,
   mapAskModeResponse,
 } from "./response/response-mapping.js";
 import { mapApiResponse } from "./response/api-response-mapping.js";

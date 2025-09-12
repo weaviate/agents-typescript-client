@@ -108,30 +108,22 @@ it("search-only mode success: caches searches and sends on subsequent request", 
   const capturedBodies: ApiSearchModeResponse[] = [];
 
   const apiSuccess: ApiSearchModeResponse = {
-    original_query: "Test this search only mode!",
     searches: [
       {
-        queries: ["search query"],
-        filters: [
-          [
-            {
-              filter_type: "integer",
-              property_name: "test_property",
-              operator: ComparisonOperator.GreaterThan,
-              value: 0,
-            },
-          ],
-        ],
-        filter_operators: "AND",
+        query: "search query",
+        filters: {
+          filter_type: "integer",
+          property_name: "test_property",
+          operator: ComparisonOperator.GreaterThan,
+          value: 0,
+        },
         collection: "test_collection",
       },
     ],
     usage: {
-      requests: 0,
-      request_tokens: undefined,
-      response_tokens: undefined,
-      total_tokens: undefined,
-      details: undefined,
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 2,
     },
     total_time: 1.5,
     search_results: {
@@ -200,30 +192,22 @@ it("search-only mode success: caches searches and sends on subsequent request", 
     collections: ["test_collection"],
   });
   expect(first).toMatchObject({
-    originalQuery: apiSuccess.original_query,
     searches: [
       {
         collection: "test_collection",
-        queries: ["search query"],
-        filters: [
-          [
-            {
-              filterType: "integer",
-              propertyName: "test_property",
-              operator: ComparisonOperator.GreaterThan,
-              value: 0,
-            },
-          ],
-        ],
-        filterOperators: "AND",
+        query: "search query",
+        filters: {
+          filterType: "integer",
+          propertyName: "test_property",
+          operator: ComparisonOperator.GreaterThan,
+          value: 0,
+        },
       },
     ],
     usage: {
-      requests: 0,
-      requestTokens: undefined,
-      responseTokens: undefined,
-      totalTokens: undefined,
-      details: undefined,
+      modelUnits: 1,
+      usageInPlan: true,
+      remainingPlanRequests: 2,
     },
     totalTime: 1.5,
     searchResults: {
@@ -266,7 +250,6 @@ it("search-only mode success: caches searches and sends on subsequent request", 
   expect(capturedBodies[1].searches).toEqual(apiSuccess.searches);
   // Response mapping should be the same (because response is mocked)
   expect(second).toMatchObject({
-    originalQuery: apiSuccess.original_query,
     searches: first.searches,
     usage: first.usage,
     totalTime: first.totalTime,

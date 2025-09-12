@@ -247,9 +247,8 @@ export type ApiWeaviateReturn = {
 };
 
 export type ApiSearchModeResponse = {
-  original_query: string;
-  searches?: ApiSearchResult[];
-  usage: ApiUsage;
+  searches?: ApiSearch[];
+  usage: ApiModelUnitUsage;
   total_time: number;
   search_results: ApiWeaviateReturn;
 };
