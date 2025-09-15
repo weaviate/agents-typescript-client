@@ -17,12 +17,6 @@ import { getHeaders } from "./connection.js";
  * This is used internally by the QueryAgent class to run search-mode queries.
  * After the first request is made, the underlying searches are cached and can
  * be reused for paginating through the a consistent set of results.
- *
- * Warning:
- * Weaviate Agents - Query Agent is an early stage alpha product.
- * The API is subject to breaking changes. Please ensure you are using the latest version of the client.
- *
- * For more information, see the [Weaviate Query Agent Docs](https://weaviate.io/developers/agents/query)
  */
 export class QueryAgentSearcher {
   private cachedSearches?: ApiSearch[];
