@@ -30,6 +30,6 @@ export type QueryAgentCollectionConfig = {
   viewProperties?: string[];
   /** Target vector for the query if a collection uses named vector. */
   targetVector?: string | string[];
-  /** Filters to apply to apply when query is executed, in addition to filters selected by the Query Agent. */
+  /** Filters to apply when query is executed, in addition to filters selected by the Query Agent. */
   additionalFilters?: FilterValue;
 };
