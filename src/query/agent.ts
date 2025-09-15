@@ -24,11 +24,6 @@ import { getHeaders } from "./connection.js";
 
 /**
  * An agent for executing agentic queries against Weaviate.
- *
- * Warning:
- * Weaviate Agents - Query Agent is an early stage alpha product.
- * The API is subject to breaking changes. Please ensure you are using the latest version of the client.
- *
  * For more information, see the [Weaviate Query Agent Docs](https://weaviate.io/developers/agents/query)
  */
 export class QueryAgent {
