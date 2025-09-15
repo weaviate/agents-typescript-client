@@ -1,5 +1,42 @@
 import { WeaviateReturn, WeaviateObject } from "weaviate-client";
 
+export type AskModeResponse = {
+  outputType: "finalState";
+  searches: Search[];
+  aggregations: Aggregation[];
+  usage: ModelUnitUsage;
+  totalTime: number;
+  isPartialAnswer?: boolean;
+  missingInformation?: string[];
+  finalAnswer: string;
+  sources?: Source[];
+  display(): void;
+};
+
+export type Search = {
+  query?: string;
+  filters?: PropertyFilter | FilterAndOr;
+  collection: string;
+};
+
+export type Aggregation = {
+  groupbyProperty?: string;
+  aggregation: PropertyAggregation;
+  filters?: PropertyFilter | FilterAndOr;
+  collection: string;
+};
+
+export type FilterAndOr = {
+  combine: "AND" | "OR";
+  filters: (PropertyFilter | FilterAndOr)[];
+};
+
+export type ModelUnitUsage = {
+  modelUnits: number;
+  usageInPlan: boolean;
+  remainingPlanRequests: number;
+};
+
 export type QueryAgentResponse = {
   outputType: "finalState";
   originalQuery: string;
@@ -280,9 +317,8 @@ export type SearchExecutionOptions = {
 };
 
 export type SearchModeResponse = {
-  originalQuery: string;
-  searches?: SearchResult[];
-  usage: Usage;
+  searches?: Search[];
+  usage: ModelUnitUsage;
   totalTime: number;
   searchResults: WeaviateReturnWithCollection;
   next: (options: SearchExecutionOptions) => Promise<SearchModeResponse>;
