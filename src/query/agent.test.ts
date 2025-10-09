@@ -1,8 +1,15 @@
 import { WeaviateClient } from "weaviate-client";
 import { QueryAgent } from "./agent.js";
 import { ApiQueryAgentResponse } from "./response/api-response.js";
-import { QueryAgentResponse, ComparisonOperator } from "./response/response.js";
-import { ApiSearchModeResponse } from "./response/api-response.js";
+import {
+  QueryAgentResponse,
+  ComparisonOperator,
+  AskModeResponse,
+} from "./response/response.js";
+import {
+  ApiSearchModeResponse,
+  ApiAskModeResponse,
+} from "./response/api-response.js";
 import { QueryAgentError } from "./response/error.js";
 
 it("runs the query agent", async () => {
@@ -83,6 +90,134 @@ it("runs the query agent", async () => {
       details: undefined,
     },
     totalTime: 10,
+    isPartialAnswer: false,
+    missingInformation: [],
+    finalAnswer: "Test answer",
+    sources: [
+      {
+        objectId: "123",
+        collection: "test-collection",
+      },
+    ],
+    display: expect.any(Function),
+  });
+});
+
+it("runs the query agent ask", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  const apiSuccess: ApiAskModeResponse = {
+    searches: [
+      {
+        query: "search query",
+        filters: {
+          filter_type: "integer",
+          property_name: "test_property",
+          operator: ComparisonOperator.GreaterThan,
+          value: 0,
+        },
+        collection: "test_collection",
+        sort_property: undefined,
+      },
+      {
+        query: undefined,
+        filters: {
+          filter_type: "integer",
+          property_name: "test_property",
+          operator: ComparisonOperator.GreaterThan,
+          value: 0,
+        },
+        collection: "test_collection",
+        sort_property: {
+          property_name: "test_property",
+          order: "ascending",
+          tie_break: {
+            property_name: "test_property_2",
+            order: "descending",
+            tie_break: undefined,
+          },
+        },
+      },
+    ],
+    aggregations: [],
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 2,
+    },
+    total_time: 1.5,
+    is_partial_answer: false,
+    missing_information: [],
+    final_answer: "Test answer",
+    sources: [
+      {
+        object_id: "123",
+        collection: "test-collection",
+      },
+    ],
+  };
+
+  global.fetch = jest.fn(() =>
+    Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response),
+  ) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient, {
+    systemPrompt: "test system prompt",
+  });
+
+  const response = await agent.ask("What is the capital of France?", {
+    collections: ["test-collection"],
+  });
+
+  expect(response).toEqual<AskModeResponse>({
+    outputType: "finalState",
+    searches: [
+      {
+        collection: "test_collection",
+        query: "search query",
+        filters: {
+          filterType: "integer",
+          propertyName: "test_property",
+          operator: ComparisonOperator.GreaterThan,
+          value: 0,
+        },
+        sortProperty: undefined,
+      },
+      {
+        collection: "test_collection",
+        query: undefined,
+        filters: {
+          filterType: "integer",
+          propertyName: "test_property",
+          operator: ComparisonOperator.GreaterThan,
+          value: 0,
+        },
+        sortProperty: {
+          propertyName: "test_property",
+          order: "ascending",
+          tieBreak: {
+            propertyName: "test_property_2",
+            order: "descending",
+          },
+        },
+      },
+    ],
+    aggregations: [],
+    usage: {
+      modelUnits: 1,
+      usageInPlan: true,
+      remainingPlanRequests: 2,
+    },
+    totalTime: 1.5,
     isPartialAnswer: false,
     missingInformation: [],
     finalAnswer: "Test answer",
