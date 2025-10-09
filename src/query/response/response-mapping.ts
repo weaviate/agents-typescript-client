@@ -16,6 +16,7 @@ import {
   AskModeResponse,
   Search,
   ModelUnitUsage,
+  QuerySort,
 } from "./response.js";
 
 import {
@@ -32,6 +33,7 @@ import {
   ApiAskModeResponse,
   ApiSearch,
   ApiModelUnitUsage,
+  ApiQuerySort,
 } from "./api-response.js";
 
 import { ServerSentEvent } from "./server-sent-events.js";
@@ -67,7 +69,16 @@ const mapSearches = (searches: ApiSearch[]): Search[] =>
     query: search.query,
     filters: search.filters ? mapFilter(search.filters) : undefined,
     collection: search.collection,
+    sortProperty: search.sort_property
+      ? mapQuerySort(search.sort_property)
+      : undefined,
   }));
+
+const mapQuerySort = (sort: ApiQuerySort): QuerySort => ({
+  propertyName: sort.property_name,
+  order: sort.order,
+  tieBreak: sort.tie_break ? mapQuerySort(sort.tie_break) : undefined,
+});
 
 const mapUsage = (usage: ApiModelUnitUsage): ModelUnitUsage => ({
   modelUnits: usage.model_units,

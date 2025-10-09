@@ -19,10 +19,17 @@ export type ApiAskModeResponse = {
   sources?: ApiSource[];
 };
 
+export type ApiQuerySort = {
+  property_name: string;
+  order: "ascending" | "descending";
+  tie_break?: ApiQuerySort;
+};
+
 export type ApiSearch = {
   query?: string;
   filters?: ApiPropertyFilter | ApiFilterAndOr;
   collection: string;
+  sort_property?: ApiQuerySort;
 };
 
 export type ApiAggregation = {

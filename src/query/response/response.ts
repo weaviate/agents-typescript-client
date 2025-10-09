@@ -17,6 +17,7 @@ export type Search = {
   query?: string;
   filters?: PropertyFilter | FilterAndOr;
   collection: string;
+  sortProperty?: QuerySort;
 };
 
 export type Aggregation = {
@@ -35,6 +36,12 @@ export type ModelUnitUsage = {
   modelUnits: number;
   usageInPlan: boolean;
   remainingPlanRequests: number;
+};
+
+export type QuerySort = {
+  propertyName: string;
+  order: "ascending" | "descending";
+  tieBreak?: QuerySort;
 };
 
 export type QueryAgentResponse = {
