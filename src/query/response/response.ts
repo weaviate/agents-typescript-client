@@ -324,17 +324,11 @@ export type StreamedTokens = {
   delta: string;
 };
 
-export type WeaviateObjectWithCollection = WeaviateObject<
-  undefined,
-  undefined
-> & {
+export type WeaviateObjectWithCollection = WeaviateObject<undefined> & {
   collection: string;
 };
 
-export type WeaviateReturnWithCollection = WeaviateReturn<
-  undefined,
-  undefined
-> & {
+export type WeaviateReturnWithCollection = WeaviateReturn<undefined> & {
   objects: WeaviateObjectWithCollection[];
 };
 
