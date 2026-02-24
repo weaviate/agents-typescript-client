@@ -30,6 +30,7 @@ export type ApiSearch = {
   filters?: ApiPropertyFilter | ApiFilterAndOr;
   collection: string;
   sort_property?: ApiQuerySort;
+  uuid_value?: string;
 };
 
 export type ApiAggregation = {
@@ -80,7 +81,9 @@ export type ApiPropertyFilter =
   | ApiDatePropertyFilter
   | ApiDateArrayPropertyFilter
   | ApiGeoPropertyFilter
-  | ApiIsNullPropertyFilter;
+  | ApiIsNullPropertyFilter
+  | ApiUUIDPropertyFilter
+  | ApiUUIDArrayPropertyFilter;
 
 type ApiPropertyFilterBase = {
   filter_type: string;
@@ -172,6 +175,18 @@ export type ApiGeoPropertyFilter = ApiPropertyFilterBase & {
 export type ApiIsNullPropertyFilter = ApiPropertyFilterBase & {
   filter_type: "is_null";
   is_null: boolean;
+};
+
+export type ApiUUIDPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "uuid";
+  operator: ComparisonOperator;
+  value: string;
+};
+
+export type ApiUUIDArrayPropertyFilter = ApiPropertyFilterBase & {
+  filter_type: "uuid_array";
+  operator: ComparisonOperator;
+  value: string[];
 };
 
 export type ApiAggregationResult = {

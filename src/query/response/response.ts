@@ -18,6 +18,7 @@ export type Search = {
   filters?: PropertyFilter | FilterAndOr;
   collection: string;
   sortProperty?: QuerySort;
+  uuidValue?: string;
 };
 
 export type Aggregation = {
@@ -77,6 +78,8 @@ export type PropertyFilter =
   | DateArrayPropertyFilter
   | GeoPropertyFilter
   | IsNullPropertyFilter
+  | UUIDPropertyFilter
+  | UUIDArrayPropertyFilter
   | UnknownPropertyFilter;
 
 type PropertyFilterBase = {
@@ -178,6 +181,20 @@ export type GeoPropertyFilter = PropertyFilterBase & {
 export type IsNullPropertyFilter = PropertyFilterBase & {
   filterType: "isNull";
   isNull: boolean;
+};
+
+/** Filter UUID properties using comparison operators. */
+export type UUIDPropertyFilter = PropertyFilterBase & {
+  filterType: "uuid";
+  operator: ComparisonOperator;
+  value: string;
+};
+
+/** Filter UUID array properties using comparison operators. */
+export type UUIDArrayPropertyFilter = PropertyFilterBase & {
+  filterType: "uuidArray";
+  operator: ComparisonOperator;
+  value: string[];
 };
 
 export type UnknownPropertyFilter = PropertyFilterBase & {
@@ -307,11 +324,11 @@ export type StreamedTokens = {
   delta: string;
 };
 
-export type WeaviateObjectWithCollection = WeaviateObject<undefined> & {
+export type WeaviateObjectWithCollection = WeaviateObject<undefined, undefined> & {
   collection: string;
 };
 
-export type WeaviateReturnWithCollection = WeaviateReturn<undefined> & {
+export type WeaviateReturnWithCollection = WeaviateReturn<undefined, undefined> & {
   objects: WeaviateObjectWithCollection[];
 };
 
