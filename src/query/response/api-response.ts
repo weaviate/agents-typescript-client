@@ -82,8 +82,8 @@ export type ApiPropertyFilter =
   | ApiDateArrayPropertyFilter
   | ApiGeoPropertyFilter
   | ApiIsNullPropertyFilter
-  | ApiUUIDPropertyFilter
-  | ApiUUIDArrayPropertyFilter;
+  | ApiUuidPropertyFilter
+  | ApiUuidArrayPropertyFilter;
 
 type ApiPropertyFilterBase = {
   filter_type: string;
@@ -177,13 +177,13 @@ export type ApiIsNullPropertyFilter = ApiPropertyFilterBase & {
   is_null: boolean;
 };
 
-export type ApiUUIDPropertyFilter = ApiPropertyFilterBase & {
+export type ApiUuidPropertyFilter = ApiPropertyFilterBase & {
   filter_type: "uuid";
   operator: ComparisonOperator;
   value: string;
 };
 
-export type ApiUUIDArrayPropertyFilter = ApiPropertyFilterBase & {
+export type ApiUuidArrayPropertyFilter = ApiPropertyFilterBase & {
   filter_type: "uuid_array";
   operator: ComparisonOperator;
   value: string[];

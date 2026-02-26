@@ -78,8 +78,8 @@ export type PropertyFilter =
   | DateArrayPropertyFilter
   | GeoPropertyFilter
   | IsNullPropertyFilter
-  | UUIDPropertyFilter
-  | UUIDArrayPropertyFilter
+  | UuidPropertyFilter
+  | UuidArrayPropertyFilter
   | UnknownPropertyFilter;
 
 type PropertyFilterBase = {
@@ -184,14 +184,14 @@ export type IsNullPropertyFilter = PropertyFilterBase & {
 };
 
 /** Filter UUID properties using comparison operators. */
-export type UUIDPropertyFilter = PropertyFilterBase & {
+export type UuidPropertyFilter = PropertyFilterBase & {
   filterType: "uuid";
   operator: ComparisonOperator;
   value: string;
 };
 
 /** Filter UUID array properties using comparison operators. */
-export type UUIDArrayPropertyFilter = PropertyFilterBase & {
+export type UuidArrayPropertyFilter = PropertyFilterBase & {
   filterType: "uuidArray";
   operator: ComparisonOperator;
   value: string[];
