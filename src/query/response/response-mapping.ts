@@ -72,6 +72,7 @@ const mapSearches = (searches: ApiSearch[]): Search[] =>
     sortProperty: search.sort_property
       ? mapQuerySort(search.sort_property)
       : undefined,
+    uuidValue: search.uuid_value,
   }));
 
 const mapQuerySort = (sort: ApiQuerySort): QuerySort => ({
@@ -249,6 +250,22 @@ const mapPropertyFilter = (filter: ApiPropertyFilter): PropertyFilter => {
         filterType: "isNull",
         propertyName: filter.property_name,
         isNull: filter.is_null,
+      };
+
+    case "uuid":
+      return {
+        filterType: "uuid",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
+      };
+
+    case "uuid_array":
+      return {
+        filterType: "uuidArray",
+        propertyName: filter.property_name,
+        operator: filter.operator,
+        value: filter.value,
       };
 
     default:

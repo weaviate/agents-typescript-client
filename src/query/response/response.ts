@@ -18,6 +18,7 @@ export type Search = {
   filters?: PropertyFilter | FilterAndOr;
   collection: string;
   sortProperty?: QuerySort;
+  uuidValue?: string;
 };
 
 export type Aggregation = {
@@ -77,6 +78,8 @@ export type PropertyFilter =
   | DateArrayPropertyFilter
   | GeoPropertyFilter
   | IsNullPropertyFilter
+  | UuidPropertyFilter
+  | UuidArrayPropertyFilter
   | UnknownPropertyFilter;
 
 type PropertyFilterBase = {
@@ -178,6 +181,20 @@ export type GeoPropertyFilter = PropertyFilterBase & {
 export type IsNullPropertyFilter = PropertyFilterBase & {
   filterType: "isNull";
   isNull: boolean;
+};
+
+/** Filter UUID properties using comparison operators. */
+export type UuidPropertyFilter = PropertyFilterBase & {
+  filterType: "uuid";
+  operator: ComparisonOperator;
+  value: string;
+};
+
+/** Filter UUID array properties using comparison operators. */
+export type UuidArrayPropertyFilter = PropertyFilterBase & {
+  filterType: "uuidArray";
+  operator: ComparisonOperator;
+  value: string[];
 };
 
 export type UnknownPropertyFilter = PropertyFilterBase & {

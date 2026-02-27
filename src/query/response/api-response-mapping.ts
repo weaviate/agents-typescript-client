@@ -159,6 +159,20 @@ const mapApiPropertyFilters = (
             property_name: filter.propertyName,
             is_null: filter.isNull,
           };
+        case "uuid":
+          return {
+            filter_type: "uuid",
+            property_name: filter.propertyName,
+            operator: filter.operator,
+            value: filter.value,
+          };
+        case "uuidArray":
+          return {
+            filter_type: "uuid_array",
+            property_name: filter.propertyName,
+            operator: filter.operator,
+            value: filter.value,
+          };
         default:
           return undefined;
       }
