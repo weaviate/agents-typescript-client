@@ -449,6 +449,7 @@ it("search-only mode sends diversity_weight when provided", async () => {
     }),
   } as unknown as WeaviateClient;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const capturedBodies: any[] = [];
 
   const apiSuccess: ApiSearchModeResponse = {
