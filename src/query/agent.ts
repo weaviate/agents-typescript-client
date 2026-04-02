@@ -328,7 +328,11 @@ export class QueryAgent {
    */
   async search(
     query: QueryAgentQuery,
-    { limit = 20, collections, diversityWeight }: QueryAgentSearchOnlyOptions = {},
+    {
+      limit = 20,
+      collections,
+      diversityWeight,
+    }: QueryAgentSearchOnlyOptions = {},
   ): Promise<SearchModeResponse> {
     const searcher = new QueryAgentSearcher(
       this.client,
