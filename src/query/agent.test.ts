@@ -440,6 +440,60 @@ it("search-only mode success: caches searches and sends on subsequent request", 
   expect(typeof second.next).toBe("function");
 });
 
+it("search-only mode sends diversity_weight when provided", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  const capturedBodies: any[] = [];
+
+  const apiSuccess: ApiSearchModeResponse = {
+    searches: [
+      {
+        query: "search query",
+        collection: "test_collection",
+      },
+    ],
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 2,
+    },
+    total_time: 1.0,
+    search_results: { objects: [] },
+  };
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient);
+
+  // With diversityWeight provided
+  await agent.search("test query", {
+    collections: ["test_collection"],
+    diversityWeight: 0.5,
+  });
+  expect(capturedBodies[0].diversity_weight).toBe(0.5);
+
+  // Without diversityWeight provided
+  capturedBodies.length = 0;
+  await agent.search("test query", {
+    collections: ["test_collection"],
+  });
+  expect(capturedBodies[0].diversity_weight).toBeNull();
+});
+
 it("search-only mode failure propagates QueryAgentError", async () => {
   const mockClient = {
     getConnectionDetails: jest.fn().mockResolvedValue({

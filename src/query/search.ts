@@ -27,6 +27,7 @@ export class QueryAgentSearcher {
     private collections: QueryAgentCollection[],
     private systemPrompt: string | undefined,
     private agentsHost: string,
+    private diversityWeight: number | undefined,
   ) {}
 
   private buildRequestBody(
@@ -47,6 +48,7 @@ export class QueryAgentSearcher {
         ...base,
         searches: null,
         system_prompt: this.systemPrompt || null,
+        diversity_weight: this.diversityWeight ?? null,
       };
     }
     return {
