@@ -328,7 +328,11 @@ export class QueryAgent {
    */
   async search(
     query: QueryAgentQuery,
-    { limit = 20, collections }: QueryAgentSearchOnlyOptions = {},
+    {
+      limit = 20,
+      collections,
+      diversityWeight,
+    }: QueryAgentSearchOnlyOptions = {},
   ): Promise<SearchModeResponse> {
     const searcher = new QueryAgentSearcher(
       this.client,
@@ -336,6 +340,7 @@ export class QueryAgent {
       this.validateCollections(collections),
       this.systemPrompt,
       this.agentsHost,
+      diversityWeight,
     );
 
     return searcher.run({ limit, offset: 0 });
@@ -413,4 +418,6 @@ export type QueryAgentSearchOnlyOptions = {
   limit?: number;
   /** List of collections to query. Will override any collections if passed in the constructor. */
   collections?: (string | QueryAgentCollectionConfig)[];
+  /** Weight for diversity in search results. */
+  diversityWeight?: number;
 };
