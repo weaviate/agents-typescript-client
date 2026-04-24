@@ -85,6 +85,7 @@ export class QueryAgent {
         collections: mapCollections(targetCollections),
         system_prompt: this.systemPrompt,
         previous_response: context ? mapApiResponse(context) : undefined,
+        result_evaluation: "llm",
       }),
     });
 
@@ -104,7 +105,7 @@ export class QueryAgent {
    */
   async ask(
     query: QueryAgentQuery,
-    { collections }: QueryAgentAskOptions = {},
+    { collections, resultEvaluation = "none" }: QueryAgentAskOptions = {},
   ): Promise<AskModeResponse> {
     const targetCollections = this.validateCollections(collections);
     const { requestHeaders, connectionHeaders } = await getHeaders(this.client);
@@ -117,6 +118,7 @@ export class QueryAgent {
         query: typeof query === "string" ? query : { messages: query },
         collections: mapCollections(targetCollections),
         system_prompt: this.systemPrompt,
+        result_evaluation: resultEvaluation,
       }),
     });
 
@@ -202,6 +204,7 @@ export class QueryAgent {
           previous_response: context ? mapApiResponse(context) : undefined,
           include_progress: includeProgress ?? true,
           include_final_state: includeFinalState ?? true,
+          result_evaluation: "llm",
         }),
       },
     );
@@ -267,6 +270,7 @@ export class QueryAgent {
       collections,
       includeProgress,
       includeFinalState,
+      resultEvaluation = "none",
     }: QueryAgentAskStreamOptions = {},
   ): AsyncGenerator<ProgressMessage | StreamedTokens | AskModeResponse> {
     const targetCollections = collections ?? this.collections;
@@ -295,6 +299,7 @@ export class QueryAgent {
           system_prompt: this.systemPrompt,
           include_progress: includeProgress ?? true,
           include_final_state: includeFinalState ?? true,
+          result_evaluation: resultEvaluation,
         }),
       },
     );
@@ -384,10 +389,15 @@ export type QueryAgentRunOptions = {
   context?: QueryAgentResponse;
 };
 
+/** Controls how the agent evaluates the final result. */
+export type ResultEvaluation = "llm" | "none";
+
 /** Options for the QueryAgent ask. */
 export type QueryAgentAskOptions = {
   /** List of collections to query. Will override any collections if passed in the constructor. */
   collections?: (string | QueryAgentCollectionConfig)[];
+  /** How the agent should evaluate the final result. Defaults to `"none"`. */
+  resultEvaluation?: ResultEvaluation;
 };
 
 /** Options for the QueryAgent stream. */
@@ -410,6 +420,8 @@ export type QueryAgentAskStreamOptions = {
   includeProgress?: boolean;
   /** Include final state in the stream. */
   includeFinalState?: boolean;
+  /** How the agent should evaluate the final result. Defaults to `"none"`. */
+  resultEvaluation?: ResultEvaluation;
 };
 
 /** Options for the QueryAgent search-only run. */
