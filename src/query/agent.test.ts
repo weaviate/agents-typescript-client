@@ -595,7 +595,7 @@ it("suggest queries mode success", async () => {
     totalTime: 0.5,
   });
 
-  expect(capturedBodies[0].collections).toEqual([{ name: "test_collection" }]);
+  expect(capturedBodies[0].collections).toEqual(["test_collection"]);
   expect(capturedBodies[0].num_queries).toBe(3);
   expect(capturedBodies[0].instructions).toBeUndefined();
 });
@@ -691,8 +691,8 @@ it("suggest queries mode uses constructor collections", async () => {
   await agent.suggestQueries();
 
   expect(capturedBodies[0].collections).toEqual([
-    { name: "collection_a" },
-    { name: "collection_b" },
+    "collection_a",
+    "collection_b",
   ]);
 });
 
