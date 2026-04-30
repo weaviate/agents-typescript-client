@@ -105,7 +105,7 @@ export class QueryAgent {
    */
   async ask(
     query: QueryAgentQuery,
-    { collections, resultEvaluation = "none" }: QueryAgentAskOptions = {},
+    { collections, resultEvaluation }: QueryAgentAskOptions = {},
   ): Promise<AskModeResponse> {
     const targetCollections = this.validateCollections(collections);
     const { requestHeaders, connectionHeaders } = await getHeaders(this.client);
@@ -118,7 +118,7 @@ export class QueryAgent {
         query: typeof query === "string" ? query : { messages: query },
         collections: mapCollections(targetCollections),
         system_prompt: this.systemPrompt,
-        result_evaluation: resultEvaluation,
+        result_evaluation: resultEvaluation ?? "none",
       }),
     });
 
@@ -270,7 +270,7 @@ export class QueryAgent {
       collections,
       includeProgress,
       includeFinalState,
-      resultEvaluation = "none",
+      resultEvaluation,
     }: QueryAgentAskStreamOptions = {},
   ): AsyncGenerator<ProgressMessage | StreamedTokens | AskModeResponse> {
     const targetCollections = collections ?? this.collections;
@@ -299,7 +299,7 @@ export class QueryAgent {
           system_prompt: this.systemPrompt,
           include_progress: includeProgress ?? true,
           include_final_state: includeFinalState ?? true,
-          result_evaluation: resultEvaluation,
+          result_evaluation: resultEvaluation ?? "none",
         }),
       },
     );
