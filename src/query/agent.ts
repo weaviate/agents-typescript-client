@@ -85,7 +85,7 @@ export class QueryAgent {
         collections: mapCollections(targetCollections),
         system_prompt: this.systemPrompt,
         previous_response: context ? mapApiResponse(context) : undefined,
-        result_evaluation: "llm",
+        result_evaluation: "none",
       }),
     });
 
@@ -204,7 +204,7 @@ export class QueryAgent {
           previous_response: context ? mapApiResponse(context) : undefined,
           include_progress: includeProgress ?? true,
           include_final_state: includeFinalState ?? true,
-          result_evaluation: "llm",
+          result_evaluation: "none",
         }),
       },
     );
