@@ -356,7 +356,7 @@ export class QueryAgent {
    */
   async suggestQueries({
     collections,
-    numQueries = 3,
+    numQueries,
     instructions,
   }: QueryAgentSuggestQueriesOptions = {}): Promise<SuggestQueryResponse> {
     const targetCollections = this.validateCollections(collections);
@@ -365,7 +365,7 @@ export class QueryAgent {
     const body: Record<string, unknown> = {
       headers: connectionHeaders,
       collections: mapCollections(targetCollections),
-      num_queries: numQueries,
+      num_queries: numQueries ?? 3,
     };
     if (instructions !== undefined) {
       body.instructions = instructions;
