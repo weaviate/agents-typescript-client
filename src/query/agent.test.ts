@@ -5,10 +5,12 @@ import {
   QueryAgentResponse,
   ComparisonOperator,
   AskModeResponse,
+  SuggestQueryResponse,
 } from "./response/response.js";
 import {
   ApiSearchModeResponse,
   ApiAskModeResponse,
+  ApiSuggestQueryResponse,
 } from "./response/api-response.js";
 import { QueryAgentError } from "./response/error.js";
 
@@ -531,6 +533,204 @@ it("search-only mode failure propagates QueryAgentError", async () => {
       message: "Test error message",
       code: "test_error_code",
       details: { info: "test detail" },
+    });
+  }
+});
+
+it("suggest queries mode success", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const apiSuccess: ApiSuggestQueryResponse = {
+    queries: [
+      { query: "What are the most popular items?" },
+      { query: "How many records exist?" },
+      { query: "Show me recent entries" },
+    ],
+    collection_count: 1,
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 10,
+    },
+    total_time: 0.5,
+  };
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient);
+
+  const response = await agent.suggestQueries({
+    collections: ["test_collection"],
+  });
+
+  expect(response).toEqual<SuggestQueryResponse>({
+    queries: [
+      { query: "What are the most popular items?" },
+      { query: "How many records exist?" },
+      { query: "Show me recent entries" },
+    ],
+    collectionCount: 1,
+    usage: {
+      modelUnits: 1,
+      usageInPlan: true,
+      remainingPlanRequests: 10,
+    },
+    totalTime: 0.5,
+  });
+
+  expect(capturedBodies[0].collections).toEqual(["test_collection"]);
+  expect(capturedBodies[0].num_queries).toBe(3);
+  expect(capturedBodies[0].instructions).toBeUndefined();
+});
+
+it("suggest queries mode passes custom num_queries and instructions", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const apiSuccess: ApiSuggestQueryResponse = {
+    queries: [
+      { query: "First query" },
+      { query: "Second query" },
+      { query: "Third query" },
+      { query: "Fourth query" },
+      { query: "Fifth query" },
+    ],
+    collection_count: 1,
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 9,
+    },
+    total_time: 0.8,
+  };
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient);
+
+  await agent.suggestQueries({
+    collections: ["test_collection"],
+    numQueries: 5,
+    instructions: "Focus on aggregation queries",
+  });
+
+  expect(capturedBodies[0].num_queries).toBe(5);
+  expect(capturedBodies[0].instructions).toBe("Focus on aggregation queries");
+});
+
+it("suggest queries mode uses constructor collections", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const apiSuccess: ApiSuggestQueryResponse = {
+    queries: [{ query: "Test query" }],
+    collection_count: 2,
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 8,
+    },
+    total_time: 0.3,
+  };
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient, {
+    collections: ["collection_a", "collection_b"],
+  });
+
+  await agent.suggestQueries();
+
+  expect(capturedBodies[0].collections).toEqual([
+    "collection_a",
+    "collection_b",
+  ]);
+});
+
+it("suggest queries mode failure propagates QueryAgentError", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  const errorJson = {
+    error: {
+      message: "Suggest queries failed",
+      code: "suggest_error",
+      details: { info: "bad request" },
+    },
+  };
+
+  global.fetch = jest.fn(() =>
+    Promise.resolve({
+      ok: false,
+      text: () => Promise.resolve(JSON.stringify(errorJson)),
+    } as Response),
+  ) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient);
+  try {
+    await agent.suggestQueries({
+      collections: ["test_collection"],
+    });
+  } catch (err) {
+    expect(err).toBeInstanceOf(QueryAgentError);
+    expect(err).toMatchObject({
+      message: "Suggest queries failed",
+      code: "suggest_error",
+      details: { info: "bad request" },
     });
   }
 });

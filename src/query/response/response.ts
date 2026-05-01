@@ -347,3 +347,14 @@ export type SearchModeResponse = {
   searchResults: WeaviateReturnWithCollection;
   next: (options: SearchExecutionOptions) => Promise<SearchModeResponse>;
 };
+
+export type SuggestedQuery = {
+  query: string;
+};
+
+export type SuggestQueryResponse = {
+  queries: SuggestedQuery[];
+  collectionCount: number;
+  usage: ModelUnitUsage;
+  totalTime: number;
+};

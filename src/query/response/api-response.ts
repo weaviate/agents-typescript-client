@@ -274,3 +274,14 @@ export type ApiSearchModeResponse = {
   total_time: number;
   search_results: ApiWeaviateReturn;
 };
+
+export type ApiSuggestedQuery = {
+  query: string;
+};
+
+export type ApiSuggestQueryResponse = {
+  queries: ApiSuggestedQuery[];
+  collection_count: number;
+  usage: ApiModelUnitUsage;
+  total_time: number;
+};

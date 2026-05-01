@@ -17,6 +17,7 @@ import {
   Search,
   ModelUnitUsage,
   QuerySort,
+  SuggestQueryResponse,
 } from "./response.js";
 
 import {
@@ -34,6 +35,7 @@ import {
   ApiSearch,
   ApiModelUnitUsage,
   ApiQuerySort,
+  ApiSuggestQueryResponse,
 } from "./api-response.js";
 
 import { ServerSentEvent } from "./server-sent-events.js";
@@ -406,6 +408,15 @@ export const mapWeviateSearchResults = (
   response: ApiWeaviateReturn,
 ): WeaviateReturnWithCollection => ({
   objects: response.objects.map(mapWeaviateObject),
+});
+
+export const mapSuggestQueryResponse = (
+  response: ApiSuggestQueryResponse,
+): SuggestQueryResponse => ({
+  queries: response.queries,
+  collectionCount: response.collection_count,
+  usage: mapUsage(response.usage),
+  totalTime: response.total_time,
 });
 
 export const mapSearchOnlyResponse = (

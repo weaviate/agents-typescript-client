@@ -4,12 +4,14 @@ import {
   ProgressMessage,
   StreamedTokens,
   AskModeResponse,
+  SuggestQueryResponse,
 } from "./response/response.js";
 import {
   mapResponse,
   mapProgressMessageFromSSE,
   mapStreamedTokensFromSSE,
   mapAskModeResponse,
+  mapSuggestQueryResponse,
 } from "./response/response-mapping.js";
 import { mapApiResponse } from "./response/api-response-mapping.js";
 import { fetchServerSentEvents } from "./response/server-sent-events.js";
@@ -351,6 +353,42 @@ export class QueryAgent {
     return searcher.run({ limit, offset: 0 });
   }
 
+  /**
+   * Suggest example queries that a user could run against the given collections.
+   *
+   * @param options - Options for the suggest queries request.
+   * @returns A list of suggested queries with usage information.
+   */
+  async suggestQueries({
+    collections,
+    numQueries,
+    instructions,
+  }: QueryAgentSuggestQueriesOptions = {}): Promise<SuggestQueryResponse> {
+    const targetCollections = this.validateCollections(collections);
+    const { requestHeaders, connectionHeaders } = await getHeaders(this.client);
+
+    const body: Record<string, unknown> = {
+      headers: connectionHeaders,
+      collections: mapCollections(targetCollections),
+      num_queries: numQueries ?? 3,
+    };
+    if (instructions !== undefined) {
+      body.instructions = instructions;
+    }
+
+    const response = await fetch(`${this.agentsHost}/query/suggest_queries`, {
+      method: "POST",
+      headers: requestHeaders,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      await handleError(await response.text());
+    }
+
+    return mapSuggestQueryResponse(await response.json());
+  }
+
   private validateCollections = (
     collections?: QueryAgentCollection[],
   ): QueryAgentCollection[] => {
@@ -432,4 +470,14 @@ export type QueryAgentSearchOnlyOptions = {
   collections?: (string | QueryAgentCollectionConfig)[];
   /** Weight for diversity in search results. */
   diversityWeight?: number;
+};
+
+/** Options for the QueryAgent suggest queries. */
+export type QueryAgentSuggestQueriesOptions = {
+  /** List of collections to query. Will override any collections if passed in the constructor. */
+  collections?: (string | QueryAgentCollectionConfig)[];
+  /** Number of queries to suggest. Defaults to 3. */
+  numQueries?: number;
+  /** Optional instructions to guide query suggestion. */
+  instructions?: string;
 };
