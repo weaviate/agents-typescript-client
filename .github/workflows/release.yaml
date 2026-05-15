@@ -7,7 +7,9 @@ on:
       - "*"
 
 permissions:
-  id-token: write
+  contents: read
+  id-token: write # to authenticate with OIDC when publishing to npm
+  pages: write # to deploy to Pages
 
 jobs:
   publish:
@@ -23,3 +25,10 @@ jobs:
           version: 10
       - run: pnpm install
       - run: pnpm publish --no-git-checks
+      - run: pnpm run docs
+      - name: "Upload docs as pages artifact"
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
+      - name: "Deploy the uploaded pages artifact"
+        uses: actions/deploy-pages@v4
