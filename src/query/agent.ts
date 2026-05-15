@@ -27,7 +27,8 @@ import { getHeaders } from "./connection.js";
 
 /**
  * An agent for executing agentic queries against Weaviate.
- * For more information, see the [Weaviate Query Agent Docs](https://weaviate.io/developers/agents/query)
+ *
+ * For more information, see the [Weaviate Agents - Query Agent Docs](https://weaviate.io/developers/agents).
  */
 export class QueryAgent {
   private collections?: (string | QueryAgentCollectionConfig)[];
@@ -35,10 +36,17 @@ export class QueryAgent {
   private agentsHost: string;
 
   /**
-   * Creates a new QueryAgent instance.
+   * Initialize the Query Agent.
    *
-   * @param client - The Weaviate client instance.
-   * @param options - Additional options for the QueryAgent.
+   * @param client - The Weaviate client connected to a Weaviate Cloud cluster.
+   * @param options - Configuration for the agent.
+   * @param options.collections - The collections to query. Either a list of strings, or a list of
+   *   {@link QueryAgentCollectionConfig} objects. Will be overridden if passed in any of the agent's
+   *   methods that support it.
+   * @param options.systemPrompt - Optional prompt to control the tone, format, and style of the
+   *   agent's final response. This prompt is both passed to the query writer agent, and applied
+   *   when generating the answer after all research and data retrieval is complete.
+   * @param options.agentsHost - Optional host of the agents service.
    */
   constructor(
     private client: WeaviateClient,
@@ -56,9 +64,11 @@ export class QueryAgent {
   /**
    * Run the query agent.
    *
-   * @deprecated Use {@link ask} instead.
+   * @deprecated The `run` method is deprecated; use {@link ask} instead.
    * @param query - The natural language query string for the agent.
-   * @param options - Additional options for the run.
+   * @param options - Options for this run.
+   * @param options.collections - The collections to query. Will override any collections passed in the constructor.
+   * @param options.context - Optional previous response from the agent.
    * @returns The response from the query agent.
    */
   async run(
@@ -99,11 +109,30 @@ export class QueryAgent {
   }
 
   /**
-   * Ask query agent a question.
+   * Run the Query Agent ask mode.
    *
-   * @param query - The natural language query string or conversation context for the agent.
-   * @param options - Additional options for the run.
-   * @returns The response from the query agent.
+   * Performs an agentic search on the collections and returns a natural language answer to the query.
+   *
+   * @param query - The natural language query string, or a list of chat messages, for the agent.
+   * @param options - Options for this ask invocation.
+   * @param options.collections - The collections to query. Either a list of strings, or a list of
+   *   {@link QueryAgentCollectionConfig} objects. Will override any collections passed in the constructor.
+   * @param options.resultEvaluation - One of `"llm"` or `"none"`.
+   *   If `"llm"`, the final answer will be cross-compared to the sources, and those sources will be
+   *   filtered to only those in the answer. Also populates the `missingInformation` and
+   *   `isPartialAnswer` fields of the response.
+   *   If `"none"`, the result will not be evaluated, and the sources will not be filtered.
+   *   Defaults to `"none"`.
+   * @returns An {@link AskModeResponse} which contains the final answer, sources, and other
+   *   metadata such as the searches performed, usage and total time.
+   *
+   * @example
+   * ```ts
+   * const agent = new QueryAgent(client, { collections: ["FinancialContracts"] });
+   * const response = await agent.ask(
+   *   "What are the terms of the contract signed by John Smith in May 2025?",
+   * );
+   * ```
    */
   async ask(
     query: QueryAgentQuery,
@@ -134,10 +163,17 @@ export class QueryAgent {
   /**
    * Stream responses from the query agent.
    *
-   * @deprecated Use {@link askStream} instead.
+   * @deprecated The `stream` method is deprecated; use {@link askStream} instead.
    * @param query - The natural language query string for the agent.
-   * @param options - Additional options for the run.
-   * @returns The response from the query agent.
+   * @param options - Options for the stream.
+   * @param options.collections - The collections to query. Will override any collections passed in the constructor.
+   * @param options.context - Optional previous response from the agent.
+   * @param options.includeProgress - Whether to include progress messages in the stream. These are
+   *   informational messages about the progress of the agent's search.
+   * @param options.includeFinalState - Whether to include the final state in the stream. This is
+   *   the final {@link QueryAgentResponse}, yielded as the last item in the stream.
+   * @returns An async generator yielding {@link ProgressMessage}, {@link StreamedTokens}, and a
+   *   final {@link QueryAgentResponse}, depending on the include flags.
    */
   stream(
     query: string,
@@ -232,11 +268,48 @@ export class QueryAgent {
   }
 
   /**
-   * Ask query agent a question and stream the response.
+   * Run the Query Agent ask mode and stream the response.
    *
-   * @param query - The natural language query string or conversation context for the agent.
-   * @param options - Additional options for the run.
-   * @returns The response from the query agent.
+   * @param query - The natural language query string, or a list of chat messages, for the agent.
+   * @param options - Options for the ask stream.
+   * @param options.collections - The collections to query. Either a list of strings, or a list of
+   *   {@link QueryAgentCollectionConfig} objects. Will override any collections passed in the constructor.
+   * @param options.includeProgress - Whether to include progress messages in the stream. These are
+   *   informational messages about the progress of the agent's search.
+   * @param options.includeFinalState - Whether to include the final state in the stream. This is
+   *   the final {@link AskModeResponse}, yielded as the last item in the stream.
+   * @param options.resultEvaluation - One of `"llm"` or `"none"`.
+   *   If `"llm"`, the final answer will be cross-compared to the sources, and those sources will be
+   *   filtered to only those in the answer. Also populates the `missingInformation` and
+   *   `isPartialAnswer` fields of the response.
+   *   If `"none"`, the result will not be evaluated, and the sources will not be filtered.
+   *   Defaults to `"none"`.
+   * @returns An async generator yielding any of the following:
+   *
+   * - {@link ProgressMessage}: informational messages about the progress of the agent's search
+   *   (if `includeProgress` is `true`).
+   * - {@link StreamedTokens}: token deltas from the agent's response.
+   * - {@link AskModeResponse}: the final response, yielded as the last item in the stream
+   *   (if `includeFinalState` is `true`).
+   *
+   * @example
+   * ```ts
+   * const agent = new QueryAgent(client, { collections: ["FinancialContracts"] });
+   * for await (const event of agent.askStream(
+   *   "What are the terms of the contract signed by John Smith in May 2025?",
+   * )) {
+   *   if ("finalAnswer" in event) {
+   *     // AskModeResponse
+   *     console.log(event.finalAnswer);
+   *   } else if ("delta" in event) {
+   *     // StreamedTokens
+   *     process.stdout.write(event.delta);
+   *   } else {
+   *     // ProgressMessage
+   *     console.log(event.message);
+   *   }
+   * }
+   * ```
    */
   askStream(
     query: QueryAgentQuery,
@@ -329,9 +402,29 @@ export class QueryAgent {
   /**
    * Run the Query Agent search-only mode.
    *
-   * Sends the initial search request and returns the first page of results.
-   * The returned response includes a `next` method for pagination which
-   * reuses the same underlying searches to ensure consistency across pages.
+   * Sends the initial search request and returns a {@link SearchModeResponse} containing the
+   * first page of results. To paginate, call `response.next({ limit, offset })` on the returned
+   * response. This reuses the same underlying searches to ensure a consistent result set across
+   * pages.
+   *
+   * @param query - The natural language query string, or a list of chat messages, for the agent.
+   * @param options - Options for this search invocation.
+   * @param options.limit - The maximum number of results to return for the first page. Defaults to 20.
+   * @param options.collections - The collections to query. Either a list of strings, or a list of
+   *   {@link QueryAgentCollectionConfig} objects. Will override any collections passed in the constructor.
+   * @param options.diversityWeight - Optional number between `0.0` and `1.0` to diversify results
+   *   with MMR reranking. Higher values push for more topical variety at the cost of relevance.
+   *   Defaults to no diversity.
+   * @returns A {@link SearchModeResponse} for the first page of results. Use
+   *   `response.next({ limit, offset })` to paginate.
+   *
+   * @example
+   * ```ts
+   * const agent = new QueryAgent(client, { collections: ["FinancialContracts"] });
+   * const page1 = await agent.search("Find all NDAs signed by Jane Doe in 2024.", { limit: 5 });
+   * const page2 = await page1.next({ limit: 5, offset: 5 });
+   * const page3 = await page2.next({ limit: 5, offset: 10 });
+   * ```
    */
   async search(
     query: QueryAgentQuery,
@@ -354,10 +447,30 @@ export class QueryAgent {
   }
 
   /**
-   * Suggest example queries that a user could run against the given collections.
+   * Suggest queries for the data in your collections.
    *
-   * @param options - Options for the suggest queries request.
-   * @returns A list of suggested queries with usage information.
+   * Uses the agent to generate example queries that can be run against the given collections.
+   * This can help users discover what kinds of questions they can ask, or generate example prompts
+   * for a dataset.
+   *
+   * @param options - Options for the suggest-queries request.
+   * @param options.collections - Optional override for the collections configured at instantiation.
+   *   Either a list of strings, or a list of {@link QueryAgentCollectionConfig} objects.
+   * @param options.numQueries - The number of queries to suggest. Defaults to 3.
+   * @param options.instructions - Optional natural language guidance for the style, topic, or
+   *   language of the suggested queries. Supplied in addition to the agent's system instructions.
+   * @returns A {@link SuggestQueryResponse} containing the list of suggested queries, along with
+   *   additional metadata if present.
+   *
+   * @example
+   * ```ts
+   * const agent = new QueryAgent(client, { collections: ["FinancialContracts"] });
+   * const suggestions = await agent.suggestQueries({
+   *   collections: ["Products"],
+   *   numQueries: 5,
+   *   instructions: "Focus on questions about eco-friendly features.",
+   * });
+   * ```
    */
   async suggestQueries({
     collections,
@@ -402,82 +515,136 @@ export class QueryAgent {
   };
 }
 
-/** Options for the QueryAgent. */
+/** Options for constructing a {@link QueryAgent}. */
 export type QueryAgentOptions = {
-  /** List of collections to query. Will be overriden if passed in the `run` method. */
+  /**
+   * The collections to query. Either a list of strings, or a list of
+   * {@link QueryAgentCollectionConfig} objects. Will be overridden if passed in any of the
+   * agent's methods that support it.
+   */
   collections?: QueryAgentCollection[];
-  /** System prompt to guide the agent's behavior. */
+  /**
+   * Optional prompt to control the tone, format, and style of the agent's final response. This
+   * prompt is both passed to the query writer agent, and applied when generating the answer
+   * after all research and data retrieval is complete.
+   */
   systemPrompt?: string;
-  /** Host of the agents service. */
+  /** Optional host of the agents service. */
   agentsHost?: string;
 };
 
+/** The query for a Query Agent invocation. Either a natural language string or a list of chat messages. */
 export type QueryAgentQuery = string | ChatMessage[];
 
+/** A single chat message in a conversation context passed to the Query Agent. */
 export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
 
-/** Options for the QueryAgent run. */
+/**
+ * Options for {@link QueryAgent.run}.
+ *
+ * @deprecated `run` is deprecated; use {@link QueryAgent.ask} with {@link QueryAgentAskOptions} instead.
+ */
 export type QueryAgentRunOptions = {
-  /** List of collections to query. Will override any collections if passed in the constructor. */
+  /** The collections to query. Will override any collections passed in the constructor. */
   collections?: (string | QueryAgentCollectionConfig)[];
-  /** Previous response from the agent. */
+  /** Optional previous response from the agent. */
   context?: QueryAgentResponse;
 };
 
-/** Controls how the agent evaluates the final result. */
+/**
+ * Controls how the agent evaluates the final result.
+ *
+ * - `"llm"`: cross-compares the final answer to the sources, filters those sources to only the
+ *   ones used in the answer, and populates `missingInformation` and `isPartialAnswer`.
+ * - `"none"`: the result is not evaluated and sources are not filtered.
+ */
 export type ResultEvaluation = "llm" | "none";
 
-/** Options for the QueryAgent ask. */
+/** Options for {@link QueryAgent.ask}. */
 export type QueryAgentAskOptions = {
-  /** List of collections to query. Will override any collections if passed in the constructor. */
+  /**
+   * The collections to query. Either a list of strings, or a list of
+   * {@link QueryAgentCollectionConfig} objects. Will override any collections passed in the constructor.
+   */
   collections?: (string | QueryAgentCollectionConfig)[];
-  /** How the agent should evaluate the final result. Defaults to `"none"`. */
+  /** How the agent should evaluate the final result. See {@link ResultEvaluation}. Defaults to `"none"`. */
   resultEvaluation?: ResultEvaluation;
 };
 
-/** Options for the QueryAgent stream. */
+/**
+ * Options for {@link QueryAgent.stream}.
+ *
+ * @deprecated `stream` is deprecated; use {@link QueryAgent.askStream} with {@link QueryAgentAskStreamOptions} instead.
+ */
 export type QueryAgentStreamOptions = {
-  /** List of collections to query. Will override any collections if passed in the constructor. */
+  /** The collections to query. Will override any collections passed in the constructor. */
   collections?: (string | QueryAgentCollectionConfig)[];
-  /** Previous response from the agent. */
+  /** Optional previous response from the agent. */
   context?: QueryAgentResponse;
-  /** Include progress messages in the stream. */
+  /**
+   * Whether to include progress messages in the stream. These are informational messages about the
+   * progress of the agent's search.
+   */
   includeProgress?: boolean;
-  /** Include final state in the stream. */
+  /**
+   * Whether to include the final state in the stream. This is the final {@link QueryAgentResponse},
+   * yielded as the last item in the stream.
+   */
   includeFinalState?: boolean;
 };
 
-/** Options for the QueryAgent askStream. */
+/** Options for {@link QueryAgent.askStream}. */
 export type QueryAgentAskStreamOptions = {
-  /** List of collections to query. Will override any collections if passed in the constructor. */
+  /**
+   * The collections to query. Either a list of strings, or a list of
+   * {@link QueryAgentCollectionConfig} objects. Will override any collections passed in the constructor.
+   */
   collections?: (string | QueryAgentCollectionConfig)[];
-  /** Include progress messages in the stream. */
+  /**
+   * Whether to include progress messages in the stream. These are informational messages about the
+   * progress of the agent's search.
+   */
   includeProgress?: boolean;
-  /** Include final state in the stream. */
+  /**
+   * Whether to include the final state in the stream. This is the final {@link AskModeResponse},
+   * yielded as the last item in the stream.
+   */
   includeFinalState?: boolean;
-  /** How the agent should evaluate the final result. Defaults to `"none"`. */
+  /** How the agent should evaluate the final result. See {@link ResultEvaluation}. Defaults to `"none"`. */
   resultEvaluation?: ResultEvaluation;
 };
 
-/** Options for the QueryAgent search-only run. */
+/** Options for {@link QueryAgent.search}. */
 export type QueryAgentSearchOnlyOptions = {
-  /** The maximum number of results to return. */
+  /** The maximum number of results to return for the first page. Defaults to 20. */
   limit?: number;
-  /** List of collections to query. Will override any collections if passed in the constructor. */
+  /**
+   * The collections to query. Either a list of strings, or a list of
+   * {@link QueryAgentCollectionConfig} objects. Will override any collections passed in the constructor.
+   */
   collections?: (string | QueryAgentCollectionConfig)[];
-  /** Weight for diversity in search results. */
+  /**
+   * Optional number between `0.0` and `1.0` to diversify results with MMR reranking. Higher values
+   * push for more topical variety at the cost of relevance. Defaults to no diversity.
+   */
   diversityWeight?: number;
 };
 
-/** Options for the QueryAgent suggest queries. */
+/** Options for {@link QueryAgent.suggestQueries}. */
 export type QueryAgentSuggestQueriesOptions = {
-  /** List of collections to query. Will override any collections if passed in the constructor. */
+  /**
+   * Optional override for the collections configured at instantiation. Either a list of strings,
+   * or a list of {@link QueryAgentCollectionConfig} objects.
+   */
   collections?: (string | QueryAgentCollectionConfig)[];
-  /** Number of queries to suggest. Defaults to 3. */
+  /** The number of queries to suggest. Defaults to 3. */
   numQueries?: number;
-  /** Optional instructions to guide query suggestion. */
+  /**
+   * Optional natural language guidance for the style, topic, or language of the suggested queries.
+   * Supplied in addition to the agent's system instructions.
+   */
   instructions?: string;
 };

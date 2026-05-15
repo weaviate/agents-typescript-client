@@ -332,19 +332,42 @@ export type WeaviateReturnWithCollection = WeaviateReturn<undefined> & {
   objects: WeaviateObjectWithCollection[];
 };
 
-/** Options for the executing a prepared QueryAgent search. */
+/** Options for executing a prepared QueryAgent search. */
 export type SearchExecutionOptions = {
-  /** The maximum number of results to return. */
+  /** The maximum number of results to return. Defaults to 20 if not specified. */
   limit?: number;
-  /** The offset of the results to return, for paginating through query result sets. */
+  /** The offset to start from, for paginating through query result sets. */
   offset: number;
 };
 
+/**
+ * Response for the Query Agent search-only mode.
+ *
+ * Contains the results of the search, the usage, and the underlying searches performed. You can
+ * paginate through the result set by calling {@link SearchModeResponse.next} on this response with
+ * different `limit` / `offset` values. This will reuse the same underlying searches each time,
+ * resulting in a consistent result set across pages.
+ */
 export type SearchModeResponse = {
+  /** The underlying searches performed by the agent to produce this result set. */
   searches?: Search[];
+  /** Model unit usage for this invocation. */
   usage: ModelUnitUsage;
+  /** Total time taken for the agent to produce this result set, in seconds. */
   totalTime: number;
+  /** The objects returned by the underlying searches, paginated by `limit` and `offset`. */
   searchResults: WeaviateReturnWithCollection;
+  /**
+   * Paginate the search-only results with the given `limit` and `offset` values.
+   *
+   * Reuses the same underlying searches as the originating request, so successive calls produce
+   * a consistent result set across pages.
+   *
+   * @param options - Pagination options.
+   * @param options.limit - The maximum number of results to return. Defaults to 20.
+   * @param options.offset - The offset to start from.
+   * @returns The next {@link SearchModeResponse} page.
+   */
   next: (options: SearchExecutionOptions) => Promise<SearchModeResponse>;
 };
 
