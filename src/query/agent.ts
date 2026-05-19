@@ -160,6 +160,30 @@ export class QueryAgent {
     return mapAskModeResponse(await response.json());
   }
 
+  /** @hidden */
+  stream(
+    query: string,
+    options: QueryAgentStreamOptions & {
+      includeProgress: false;
+      includeFinalState: false;
+    },
+  ): AsyncGenerator<StreamedTokens>;
+  /** @hidden */
+  stream(
+    query: string,
+    options: QueryAgentStreamOptions & {
+      includeProgress: false;
+      includeFinalState?: true;
+    },
+  ): AsyncGenerator<StreamedTokens | QueryAgentResponse>;
+  /** @hidden */
+  stream(
+    query: string,
+    options: QueryAgentStreamOptions & {
+      includeProgress?: true;
+      includeFinalState: false;
+    },
+  ): AsyncGenerator<ProgressMessage | StreamedTokens>;
   /**
    * Stream responses from the query agent.
    *
@@ -175,30 +199,6 @@ export class QueryAgent {
    * @returns An async generator yielding {@link ProgressMessage}, {@link StreamedTokens}, and a
    *   final {@link QueryAgentResponse}, depending on the include flags.
    */
-  stream(
-    query: string,
-    options: QueryAgentStreamOptions & {
-      includeProgress: false;
-      includeFinalState: false;
-    },
-  ): AsyncGenerator<StreamedTokens>;
-  /** @deprecated Use {@link askStream} instead. */
-  stream(
-    query: string,
-    options: QueryAgentStreamOptions & {
-      includeProgress: false;
-      includeFinalState?: true;
-    },
-  ): AsyncGenerator<StreamedTokens | QueryAgentResponse>;
-  /** @deprecated Use {@link askStream} instead. */
-  stream(
-    query: string,
-    options: QueryAgentStreamOptions & {
-      includeProgress?: true;
-      includeFinalState: false;
-    },
-  ): AsyncGenerator<ProgressMessage | StreamedTokens>;
-  /** @deprecated Use {@link askStream} instead. */
   stream(
     query: string,
     options?: QueryAgentStreamOptions & {
@@ -267,6 +267,30 @@ export class QueryAgent {
     }
   }
 
+  /** @hidden */
+  askStream(
+    query: QueryAgentQuery,
+    options: QueryAgentAskStreamOptions & {
+      includeProgress: false;
+      includeFinalState: false;
+    },
+  ): AsyncGenerator<StreamedTokens>;
+  /** @hidden */
+  askStream(
+    query: QueryAgentQuery,
+    options: QueryAgentAskStreamOptions & {
+      includeProgress: false;
+      includeFinalState?: true;
+    },
+  ): AsyncGenerator<StreamedTokens | AskModeResponse>;
+  /** @hidden */
+  askStream(
+    query: QueryAgentQuery,
+    options: QueryAgentAskStreamOptions & {
+      includeProgress?: true;
+      includeFinalState: false;
+    },
+  ): AsyncGenerator<ProgressMessage | StreamedTokens>;
   /**
    * Run the Query Agent ask mode and stream the response.
    *
@@ -311,27 +335,6 @@ export class QueryAgent {
    * }
    * ```
    */
-  askStream(
-    query: QueryAgentQuery,
-    options: QueryAgentAskStreamOptions & {
-      includeProgress: false;
-      includeFinalState: false;
-    },
-  ): AsyncGenerator<StreamedTokens>;
-  askStream(
-    query: QueryAgentQuery,
-    options: QueryAgentAskStreamOptions & {
-      includeProgress: false;
-      includeFinalState?: true;
-    },
-  ): AsyncGenerator<StreamedTokens | AskModeResponse>;
-  askStream(
-    query: QueryAgentQuery,
-    options: QueryAgentAskStreamOptions & {
-      includeProgress?: true;
-      includeFinalState: false;
-    },
-  ): AsyncGenerator<ProgressMessage | StreamedTokens>;
   askStream(
     query: QueryAgentQuery,
     options?: QueryAgentAskStreamOptions & {
