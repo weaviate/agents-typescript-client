@@ -1,39 +1,37 @@
 ---
-name: Release
+name: Docs Preview
 
 on:
   push:
-    tags:
-      - "*"
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: write # to push to gh-pages branch
-  id-token: write # to authenticate with OIDC when publishing to npm
 
 concurrency:
   group: gh-pages-write
   cancel-in-progress: false
 
 jobs:
-  publish:
+  deploy-preview:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          registry-url: "https://registry.npmjs.org"
       - uses: pnpm/action-setup@v4
         with:
           version: 10
       - run: pnpm install
-      - run: pnpm publish --no-git-checks
       - run: pnpm run docs
 
-      - name: Deploy released docs to gh-pages root
+      - name: Deploy preview to gh-pages /preview
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs
-          keep_files: true
-          commit_message: "Deploy released docs ${{ github.ref_name }}"
+          destination_dir: preview
+          commit_message: "Deploy preview from ${{ github.sha }}"
