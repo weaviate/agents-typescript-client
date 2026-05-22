@@ -28,6 +28,7 @@ export class QueryAgentSearcher {
     private systemPrompt: string | undefined,
     private agentsHost: string,
     private diversityWeight: number | undefined,
+    private retrievalStrategy: "recall" | "precision",
   ) {}
 
   private buildRequestBody(
@@ -49,11 +50,13 @@ export class QueryAgentSearcher {
         searches: null,
         system_prompt: this.systemPrompt || null,
         diversity_weight: this.diversityWeight ?? null,
+        retrieval_strategy: this.retrievalStrategy,
       };
     }
     return {
       ...base,
       searches: this.cachedSearches,
+      retrieval_strategy: this.retrievalStrategy,
     };
   }
 
@@ -94,7 +97,7 @@ export class QueryAgentSearcher {
     // If we successfully mapped the searches, cache them for the next request.
     // Since this cache is a private internal value, there's not point in mapping
     // back and forth between the exported and API types, so we cache apiSearches
-    if (mappedResponse.searches) {
+    if (mappedResponse.searches !== undefined) {
       this.cachedSearches = apiSearches;
     }
     return {
