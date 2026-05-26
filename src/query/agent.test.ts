@@ -537,7 +537,7 @@ it("search-only mode failure propagates QueryAgentError", async () => {
   }
 });
 
-it("search-only mode sends retrieval_strategy and persists through pagination", async () => {
+it("search-only mode sends filtering and persists through pagination", async () => {
   const mockClient = {
     getConnectionDetails: jest.fn().mockResolvedValue({
       host: "test-cluster",
@@ -579,18 +579,18 @@ it("search-only mode sends retrieval_strategy and persists through pagination", 
 
   const first = await agent.search("test query", {
     collections: ["test_collection"],
-    retrievalStrategy: "precision",
+    filtering: "precision",
   });
 
-  // First request should include retrieval_strategy
-  expect(capturedBodies[0].retrieval_strategy).toBe("precision");
+  // First request should include filtering
+  expect(capturedBodies[0].filtering).toBe("precision");
 
-  // Paginated request should also include retrieval_strategy
+  // Paginated request should also include filtering
   await first.next({ limit: 20, offset: 1 });
-  expect(capturedBodies[1].retrieval_strategy).toBe("precision");
+  expect(capturedBodies[1].filtering).toBe("precision");
 });
 
-it("search-only mode defaults retrieval_strategy to recall", async () => {
+it("search-only mode defaults filtering to recall", async () => {
   const mockClient = {
     getConnectionDetails: jest.fn().mockResolvedValue({
       host: "test-cluster",
@@ -635,7 +635,7 @@ it("search-only mode defaults retrieval_strategy to recall", async () => {
   });
 
   // Default should be "recall"
-  expect(capturedBodies[0].retrieval_strategy).toBe("recall");
+  expect(capturedBodies[0].filtering).toBe("recall");
 });
 
 it("search-only mode caches empty searches array for precision mode pagination", async () => {
@@ -676,7 +676,7 @@ it("search-only mode caches empty searches array for precision mode pagination",
 
   const first = await agent.search("test query", {
     collections: ["test_collection"],
-    retrievalStrategy: "precision",
+    filtering: "precision",
   });
 
   // First request should have searches: null (generation request)
