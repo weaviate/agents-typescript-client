@@ -28,7 +28,7 @@ import { getHeaders } from "./connection.js";
 /**
  * An agent for executing agentic queries against Weaviate.
  *
- * For more information, see the [Weaviate Agents - Query Agent docs](https://weaviate.io/developers/agents).
+ * For more information, see the [Weaviate Agents - Query Agent Docs](https://weaviate.io/developers/agents).
  */
 export class QueryAgent {
   private collections?: (string | QueryAgentCollectionConfig)[];
