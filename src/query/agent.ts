@@ -474,6 +474,10 @@ export class QueryAgent {
    *   collections: ["Products"],
    *   numQueries: 5,
    *   instructions: "Focus on questions about eco-friendly features.",
+   *   conversation: [
+   *     { role: "user", content: "What topics are covered?" },
+   *     { role: "assistant", content: "The collection covers ML and economics." },
+   *   ],
    * });
    * ```
    */
