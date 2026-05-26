@@ -462,6 +462,8 @@ export class QueryAgent {
    * @param options.numQueries - The number of queries to suggest. Defaults to 3.
    * @param options.instructions - Optional natural language guidance for the style, topic, or
    *   language of the suggested queries. Supplied in addition to the agent's system instructions.
+   * @param options.conversation - Optional conversation history to contextualise suggested queries
+   *   as follow-up questions. Each element is a {@link ChatMessage} with `role` and `content`.
    * @returns A {@link SuggestQueryResponse} containing the list of suggested queries, along with
    *   additional metadata if present.
    *
@@ -479,6 +481,7 @@ export class QueryAgent {
     collections,
     numQueries,
     instructions,
+    conversation,
   }: QueryAgentSuggestQueriesOptions = {}): Promise<SuggestQueryResponse> {
     const targetCollections = this.validateCollections(collections);
     const { requestHeaders, connectionHeaders } = await getHeaders(this.client);
@@ -490,6 +493,9 @@ export class QueryAgent {
     };
     if (instructions !== undefined) {
       body.instructions = instructions;
+    }
+    if (conversation !== undefined) {
+      body.conversation_context = { messages: conversation };
     }
 
     const response = await fetch(`${this.agentsHost}/query/suggest_queries`, {
@@ -650,4 +656,9 @@ export type QueryAgentSuggestQueriesOptions = {
    * Supplied in addition to the agent's system instructions.
    */
   instructions?: string;
+  /**
+   * Optional conversation history to contextualise suggested queries as follow-up questions.
+   * Each element is a {@link ChatMessage} with `role` and `content`.
+   */
+  conversation?: ChatMessage[];
 };
