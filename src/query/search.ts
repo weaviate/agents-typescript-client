@@ -28,7 +28,7 @@ export class QueryAgentSearcher {
     private systemPrompt: string | undefined,
     private agentsHost: string,
     private diversityWeight: number | undefined,
-    private filtering: "recall" | "precision",
+    private filtering: "recall" | "precision" | undefined,
   ) {}
 
   private buildRequestBody(
@@ -50,13 +50,13 @@ export class QueryAgentSearcher {
         searches: null,
         system_prompt: this.systemPrompt || null,
         diversity_weight: this.diversityWeight ?? null,
-        filtering: this.filtering,
+        ...(this.filtering !== undefined && { filtering: this.filtering }),
       };
     }
     return {
       ...base,
       searches: this.cachedSearches,
-      filtering: this.filtering,
+      ...(this.filtering !== undefined && { filtering: this.filtering }),
     };
   }
 

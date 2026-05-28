@@ -437,7 +437,7 @@ export class QueryAgent {
       limit = 20,
       collections,
       diversityWeight,
-      filtering = "recall",
+      filtering,
     }: QueryAgentSearchOnlyOptions = {},
   ): Promise<SearchModeResponse> {
     const searcher = new QueryAgentSearcher(
@@ -641,7 +641,7 @@ export type QueryAgentSearchOnlyOptions = {
   /**
    * The filtering strategy to use for the search. `"recall"` optimizes for finding all relevant
    * results (broader retrieval), while `"precision"` optimizes for accuracy of returned results
-   * (narrower, more targeted retrieval). Defaults to `"recall"`.
+   * (narrower, more targeted retrieval).
    */
   filtering?: "recall" | "precision";
 };
