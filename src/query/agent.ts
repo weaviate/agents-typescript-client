@@ -418,6 +418,8 @@ export class QueryAgent {
    * @param options.diversityWeight - Optional number between `0.0` and `1.0` to diversify results
    *   with MMR reranking. Higher values push for more topical variety at the cost of relevance.
    *   Defaults to no diversity.
+   * @param options.filtering - The filtering strategy: `"recall"` for broader retrieval or
+   *   `"precision"` for more targeted results. Defaults to `"recall"`.
    * @returns A {@link SearchModeResponse} for the first page of results. Use
    *   `response.next({ limit, offset })` to paginate.
    *
@@ -435,6 +437,7 @@ export class QueryAgent {
       limit = 20,
       collections,
       diversityWeight,
+      filtering,
     }: QueryAgentSearchOnlyOptions = {},
   ): Promise<SearchModeResponse> {
     const searcher = new QueryAgentSearcher(
@@ -444,6 +447,7 @@ export class QueryAgent {
       this.systemPrompt,
       this.agentsHost,
       diversityWeight,
+      filtering,
     );
 
     return searcher.run({ limit, offset: 0 });
@@ -634,6 +638,12 @@ export type QueryAgentSearchOnlyOptions = {
    * push for more topical variety at the cost of relevance. Defaults to no diversity.
    */
   diversityWeight?: number;
+  /**
+   * The filtering strategy to use for the search. `"recall"` optimizes for finding all relevant
+   * results (broader retrieval), while `"precision"` optimizes for accuracy of returned results
+   * (narrower, more targeted retrieval).
+   */
+  filtering?: "recall" | "precision";
 };
 
 /** Options for {@link QueryAgent.suggestQueries}. */
