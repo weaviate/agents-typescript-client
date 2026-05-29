@@ -634,8 +634,8 @@ it("search-only mode defaults filtering to recall", async () => {
     collections: ["test_collection"],
   });
 
-  // Default should be "recall"
-  expect(capturedBodies[0].filtering).toBe("recall");
+  // When no filtering is specified, it should not be sent (server-side default)
+  expect(capturedBodies[0].filtering).toBeUndefined();
 });
 
 it("search-only mode caches empty searches array for precision mode pagination", async () => {
