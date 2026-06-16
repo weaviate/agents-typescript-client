@@ -1,6 +1,6 @@
 {
   "name": "weaviate-agents",
-  "version": "1.5.1",
+  "version": "1.5.0",
   "description": "JS/TS client for Weaviate Agents",
   "exports": "./dist/index.js",
   "type": "module",
