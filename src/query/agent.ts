@@ -1,10 +1,13 @@
 import { WeaviateClient } from "weaviate-client";
+import { z } from "zod";
 import {
   QueryAgentResponse,
   ProgressMessage,
   StreamedTokens,
   AskModeResponse,
   SuggestQueryResponse,
+  OutputFormat,
+  ParsedAskModeResponse,
 } from "./response/response.js";
 import {
   mapResponse,
@@ -12,6 +15,7 @@ import {
   mapStreamedTokensFromSSE,
   mapAskModeResponse,
   mapSuggestQueryResponse,
+  isZodSchema,
 } from "./response/response-mapping.js";
 import { mapApiResponse } from "./response/api-response-mapping.js";
 import { fetchServerSentEvents } from "./response/server-sent-events.js";
@@ -136,8 +140,12 @@ export class QueryAgent {
    */
   async ask(
     query: QueryAgentQuery,
-    { collections, resultEvaluation }: QueryAgentAskOptions = {},
-  ): Promise<AskModeResponse> {
+    {
+      collections,
+      resultEvaluation,
+      outputFormat,
+    }: QueryAgentAskOptions & { outputFormat?: OutputFormat } = {},
+  ): Promise<AskModeResponse | ParsedAskModeResponse<unknown>> {
     const targetCollections = this.validateCollections(collections);
     const { requestHeaders, connectionHeaders } = await getHeaders(this.client);
 
@@ -150,6 +158,7 @@ export class QueryAgent {
         collections: mapCollections(targetCollections),
         system_prompt: this.systemPrompt,
         result_evaluation: resultEvaluation ?? "none",
+        output_format: mapOutputFormat(outputFormat),
       }),
     });
 
@@ -271,6 +280,7 @@ export class QueryAgent {
   askStream(
     query: QueryAgentQuery,
     options: QueryAgentAskStreamOptions & {
+      outputFormat?: undefined;
       includeProgress: false;
       includeFinalState: false;
     },
@@ -279,6 +289,7 @@ export class QueryAgent {
   askStream(
     query: QueryAgentQuery,
     options: QueryAgentAskStreamOptions & {
+      outputFormat?: undefined;
       includeProgress: false;
       includeFinalState?: true;
     },
@@ -287,6 +298,7 @@ export class QueryAgent {
   askStream(
     query: QueryAgentQuery,
     options: QueryAgentAskStreamOptions & {
+      outputFormat?: undefined;
       includeProgress?: true;
       includeFinalState: false;
     },
@@ -338,6 +350,7 @@ export class QueryAgent {
   askStream(
     query: QueryAgentQuery,
     options?: QueryAgentAskStreamOptions & {
+      outputFormat?: undefined;
       includeProgress?: true;
       includeFinalState?: true;
     },
@@ -349,8 +362,14 @@ export class QueryAgent {
       includeProgress,
       includeFinalState,
       resultEvaluation,
-    }: QueryAgentAskStreamOptions = {},
-  ): AsyncGenerator<ProgressMessage | StreamedTokens | AskModeResponse> {
+      outputFormat,
+    }: QueryAgentAskStreamOptions & { outputFormat?: OutputFormat } = {},
+  ): AsyncGenerator<
+    | ProgressMessage
+    | StreamedTokens
+    | AskModeResponse
+    | ParsedAskModeResponse<unknown>
+  > {
     const targetCollections = collections ?? this.collections;
 
     if (!targetCollections) {
@@ -378,6 +397,7 @@ export class QueryAgent {
           include_progress: includeProgress ?? true,
           include_final_state: includeFinalState ?? true,
           result_evaluation: resultEvaluation ?? "none",
+          output_format: mapOutputFormat(outputFormat),
         }),
       },
     );
@@ -387,13 +407,26 @@ export class QueryAgent {
         await handleError(event.data);
       }
 
-      let output: ProgressMessage | StreamedTokens | AskModeResponse;
+      let output:
+        | ProgressMessage
+        | StreamedTokens
+        | AskModeResponse
+        | ParsedAskModeResponse<unknown>;
       if (event.event === "progress_message") {
         output = mapProgressMessageFromSSE(event);
       } else if (event.event === "streamed_tokens") {
         output = mapStreamedTokensFromSSE(event);
       } else if (event.event === "final_state") {
-        output = mapAskModeResponse(JSON.parse(event.data));
+        const finalState = JSON.parse(event.data);
+        if (outputFormat === undefined) {
+          output = mapAskModeResponse(finalState);
+        } else {
+          // Both arms are the same call; the branch only narrows the type
+          // (Zod schema vs raw JSON Schema) to select the right overload.
+          output = isZodSchema(outputFormat)
+            ? mapAskModeResponse(finalState, outputFormat)
+            : mapAskModeResponse(finalState, outputFormat);
+        }
       } else {
         throw new Error(`Unexpected event type: ${event.event}: ${event.data}`);
       }

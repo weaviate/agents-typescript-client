@@ -18,7 +18,11 @@ import {
   ModelUnitUsage,
   QuerySort,
   SuggestQueryResponse,
+  OutputFormat,
+  ParsedAskModeResponse,
 } from "./response.js";
+
+import { z } from "zod";
 
 import {
   ApiQueryAgentResponse,
@@ -40,9 +44,29 @@ import {
 
 import { ServerSentEvent } from "./server-sent-events.js";
 
-export const mapAskModeResponse = (
+/**
+ * Duck-types a value as a Zod schema (as opposed to a raw JSON Schema object):
+ * only a Zod schema carries a `parse` method, and a function value can never
+ * appear in a JSON-serialisable schema, so this reliably tells the two apart.
+ */
+export const isZodSchema = (value: OutputFormat): value is z.ZodType =>
+  typeof (value as { parse?: unknown }).parse === "function";
+
+export function mapAskModeResponse(
   response: ApiAskModeResponse,
-): AskModeResponse => {
+): AskModeResponse;
+export function mapAskModeResponse<S extends z.ZodType>(
+  response: ApiAskModeResponse,
+  outputFormat: S,
+): ParsedAskModeResponse<z.infer<S>>;
+export function mapAskModeResponse(
+  response: ApiAskModeResponse,
+  outputFormat: Record<string, unknown>,
+): ParsedAskModeResponse<Record<string, unknown>>;
+export function mapAskModeResponse(
+  response: ApiAskModeResponse,
+  outputFormat?: OutputFormat,
+): AskModeResponse | ParsedAskModeResponse<unknown> {
   const properties: AskModeResponseProperties = {
     outputType: "finalState",
     searches: mapSearches(response.searches),
@@ -60,11 +84,28 @@ export const mapAskModeResponse = (
     sources: response.sources ? mapSources(response.sources) : undefined,
   };
 
-  return {
+  if (outputFormat === undefined) {
+    return {
+      ...properties,
+      display: () => display(properties),
+    };
+  }
+
+  // A Zod schema parses and validates; a raw JSON Schema only parses the JSON.
+  const finalAnswerParsed: unknown = isZodSchema(outputFormat)
+    ? outputFormat.parse(JSON.parse(response.final_answer))
+    : (JSON.parse(response.final_answer) as Record<string, unknown>);
+
+  const parsedProperties: ParsedAskModeResponseProperties = {
     ...properties,
-    display: () => display(properties),
+    finalAnswerParsed,
   };
-};
+
+  return {
+    ...parsedProperties,
+    display: () => display(parsedProperties),
+  };
+}
 
 const mapSearches = (searches: ApiSearch[]): Search[] =>
   searches.map((search) => ({
@@ -312,11 +353,20 @@ const mapSources = (sources: ApiSource[]): Source[] =>
     collection: source.collection,
   }));
 
-const display = (response: AskModeResponseProperties | ResponseProperties) => {
+const display = (
+  response:
+    | AskModeResponseProperties
+    | ParsedAskModeResponseProperties
+    | ResponseProperties,
+) => {
   console.log(JSON.stringify(response, undefined, 2));
 };
 
 type AskModeResponseProperties = Omit<AskModeResponse, "display">;
+type ParsedAskModeResponseProperties = Omit<
+  ParsedAskModeResponse<unknown>,
+  "display"
+>;
 type ResponseProperties = Omit<QueryAgentResponse, "display">;
 
 type ProgressMessageJSON = Omit<ProgressMessage, "outputType"> & {
