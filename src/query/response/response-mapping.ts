@@ -65,6 +65,10 @@ export function mapAskModeResponse(
 ): ParsedAskModeResponse<Record<string, unknown>>;
 export function mapAskModeResponse(
   response: ApiAskModeResponse,
+  outputFormat: OutputFormat,
+): ParsedAskModeResponse<unknown>;
+export function mapAskModeResponse(
+  response: ApiAskModeResponse,
   outputFormat?: OutputFormat,
 ): AskModeResponse | ParsedAskModeResponse<unknown> {
   const properties: AskModeResponseProperties = {

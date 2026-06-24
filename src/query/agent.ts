@@ -208,13 +208,8 @@ export class QueryAgent {
     }
 
     const json = await response.json();
-    if (outputFormat === undefined) {
-      return mapAskModeResponse(json);
-    }
-    // Both arms are the same call; the branch only narrows the type
-    // (Zod schema vs raw JSON Schema) to select the right overload.
-    return isZodSchema(outputFormat)
-      ? mapAskModeResponse(json, outputFormat)
+    return outputFormat === undefined
+      ? mapAskModeResponse(json)
       : mapAskModeResponse(json, outputFormat);
   }
 
@@ -581,15 +576,10 @@ export class QueryAgent {
         output = mapStreamedTokensFromSSE(event);
       } else if (event.event === "final_state") {
         const finalState = JSON.parse(event.data);
-        if (outputFormat === undefined) {
-          output = mapAskModeResponse(finalState);
-        } else {
-          // Both arms are the same call; the branch only narrows the type
-          // (Zod schema vs raw JSON Schema) to select the right overload.
-          output = isZodSchema(outputFormat)
-            ? mapAskModeResponse(finalState, outputFormat)
+        output =
+          outputFormat === undefined
+            ? mapAskModeResponse(finalState)
             : mapAskModeResponse(finalState, outputFormat);
-        }
       } else {
         throw new Error(`Unexpected event type: ${event.event}: ${event.data}`);
       }
