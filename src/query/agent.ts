@@ -1,10 +1,13 @@
 import { WeaviateClient } from "weaviate-client";
+import { z } from "zod";
 import {
   QueryAgentResponse,
   ProgressMessage,
   StreamedTokens,
   AskModeResponse,
   SuggestQueryResponse,
+  OutputFormat,
+  ParsedAskModeResponse,
 } from "./response/response.js";
 import {
   mapResponse,
@@ -12,6 +15,7 @@ import {
   mapStreamedTokensFromSSE,
   mapAskModeResponse,
   mapSuggestQueryResponse,
+  isZodSchema,
 } from "./response/response-mapping.js";
 import { mapApiResponse } from "./response/api-response-mapping.js";
 import { fetchServerSentEvents } from "./response/server-sent-events.js";
@@ -108,6 +112,16 @@ export class QueryAgent {
     return mapResponse(await response.json());
   }
 
+  /** @hidden */
+  ask<S extends z.ZodType>(
+    query: QueryAgentQuery,
+    options: QueryAgentAskOptions & { outputFormat: S },
+  ): Promise<ParsedAskModeResponse<z.infer<S>>>;
+  /** @hidden */
+  ask(
+    query: QueryAgentQuery,
+    options: QueryAgentAskOptions & { outputFormat: Record<string, unknown> },
+  ): Promise<ParsedAskModeResponse<Record<string, unknown>>>;
   /**
    * Run the Query Agent ask mode.
    *
@@ -123,8 +137,13 @@ export class QueryAgent {
    *   `isPartialAnswer` fields of the response.
    *   If `"none"`, the result will not be evaluated, and the sources will not be filtered.
    *   Defaults to `"none"`.
-   * @returns An {@link AskModeResponse} which contains the final answer, sources, and other
-   *   metadata such as the searches performed, usage and total time.
+   * @param options.outputFormat - The structured output format to return. Either a Zod schema, a JSON Schema object, or undefined.
+   *   If a Zod schema is provided, the final answer will be parsed and validated into the schema, and the response will be returned as a {@link ParsedAskModeResponse} whose `finalAnswerParsed` is typed as `z.infer<typeof schema>`.
+   *   If a JSON Schema object (Draft 2020-12) is provided, the final answer will be parsed as JSON, and the response will be returned as a {@link ParsedAskModeResponse} whose `finalAnswerParsed` is typed as `Record<string, unknown>`.
+   *   If undefined (the default, no structured output), the answer is plain text on `finalAnswer` and an {@link AskModeResponse} is returned.
+   * @returns An {@link AskModeResponse} (or {@link ParsedAskModeResponse} when `outputFormat` is set)
+   *   which contains the final answer, sources, and other metadata such as the searches performed,
+   *   usage and total time.
    *
    * @example
    * ```ts
@@ -133,11 +152,41 @@ export class QueryAgent {
    *   "What are the terms of the contract signed by John Smith in May 2025?",
    * );
    * ```
+   *
+   * @example Structured output with a Zod schema. The final answer is parsed and
+   * validated into the schema, and exposed (typed) on `finalAnswerParsed`.
+   * ```ts
+   * import { z } from "zod";
+   *
+   * const CitedText = z.object({
+   *   text: z.string(),
+   *   sources: z
+   *     .array(z.string())
+   *     .describe("The sources that support this section of text. Can be empty."),
+   * });
+   * const AnswerWithSources = z.object({ texts: z.array(CitedText) });
+   *
+   * const agent = new QueryAgent(client, { collections: ["FinancialContracts"] });
+   * const result = await agent.ask(
+   *   "What contracts were signed by Jane Doe in 2024? What were they about?",
+   *   { outputFormat: AnswerWithSources },
+   * );
+   * // result.finalAnswerParsed is typed as { texts: { text: string; sources: string[] }[] }
+   * console.log(result.finalAnswerParsed.texts);
+   * ```
    */
+  ask(
+    query: QueryAgentQuery,
+    options?: QueryAgentAskOptions,
+  ): Promise<AskModeResponse>;
   async ask(
     query: QueryAgentQuery,
-    { collections, resultEvaluation }: QueryAgentAskOptions = {},
-  ): Promise<AskModeResponse> {
+    {
+      collections,
+      resultEvaluation,
+      outputFormat,
+    }: QueryAgentAskOptions & { outputFormat?: OutputFormat } = {},
+  ): Promise<AskModeResponse | ParsedAskModeResponse<unknown>> {
     const targetCollections = this.validateCollections(collections);
     const { requestHeaders, connectionHeaders } = await getHeaders(this.client);
 
@@ -150,6 +199,7 @@ export class QueryAgent {
         collections: mapCollections(targetCollections),
         system_prompt: this.systemPrompt,
         result_evaluation: resultEvaluation ?? "none",
+        output_format: mapOutputFormat(outputFormat),
       }),
     });
 
@@ -157,7 +207,10 @@ export class QueryAgent {
       await handleError(await response.text());
     }
 
-    return mapAskModeResponse(await response.json());
+    const json = await response.json();
+    return outputFormat === undefined
+      ? mapAskModeResponse(json)
+      : mapAskModeResponse(json, outputFormat);
   }
 
   /** @hidden */
@@ -268,9 +321,48 @@ export class QueryAgent {
   }
 
   /** @hidden */
+  askStream<S extends z.ZodType>(
+    query: QueryAgentQuery,
+    options: QueryAgentAskStreamOptions & {
+      outputFormat: S;
+      includeProgress: false;
+      includeFinalState: false;
+    },
+  ): AsyncGenerator<StreamedTokens>;
+  /** @hidden */
+  askStream<S extends z.ZodType>(
+    query: QueryAgentQuery,
+    options: QueryAgentAskStreamOptions & {
+      outputFormat: S;
+      includeProgress: false;
+      includeFinalState?: true;
+    },
+  ): AsyncGenerator<StreamedTokens | ParsedAskModeResponse<z.infer<S>>>;
+  /** @hidden */
+  askStream<S extends z.ZodType>(
+    query: QueryAgentQuery,
+    options: QueryAgentAskStreamOptions & {
+      outputFormat: S;
+      includeProgress?: true;
+      includeFinalState: false;
+    },
+  ): AsyncGenerator<ProgressMessage | StreamedTokens>;
+  /** @hidden */
+  askStream<S extends z.ZodType>(
+    query: QueryAgentQuery,
+    options: QueryAgentAskStreamOptions & {
+      outputFormat: S;
+      includeProgress?: true;
+      includeFinalState?: true;
+    },
+  ): AsyncGenerator<
+    ProgressMessage | StreamedTokens | ParsedAskModeResponse<z.infer<S>>
+  >;
+  /** @hidden */
   askStream(
     query: QueryAgentQuery,
     options: QueryAgentAskStreamOptions & {
+      outputFormat: Record<string, unknown>;
       includeProgress: false;
       includeFinalState: false;
     },
@@ -279,6 +371,49 @@ export class QueryAgent {
   askStream(
     query: QueryAgentQuery,
     options: QueryAgentAskStreamOptions & {
+      outputFormat: Record<string, unknown>;
+      includeProgress: false;
+      includeFinalState?: true;
+    },
+  ): AsyncGenerator<
+    StreamedTokens | ParsedAskModeResponse<Record<string, unknown>>
+  >;
+  /** @hidden */
+  askStream(
+    query: QueryAgentQuery,
+    options: QueryAgentAskStreamOptions & {
+      outputFormat: Record<string, unknown>;
+      includeProgress?: true;
+      includeFinalState: false;
+    },
+  ): AsyncGenerator<ProgressMessage | StreamedTokens>;
+  /** @hidden */
+  askStream(
+    query: QueryAgentQuery,
+    options: QueryAgentAskStreamOptions & {
+      outputFormat: Record<string, unknown>;
+      includeProgress?: true;
+      includeFinalState?: true;
+    },
+  ): AsyncGenerator<
+    | ProgressMessage
+    | StreamedTokens
+    | ParsedAskModeResponse<Record<string, unknown>>
+  >;
+  /** @hidden */
+  askStream(
+    query: QueryAgentQuery,
+    options: QueryAgentAskStreamOptions & {
+      outputFormat?: undefined;
+      includeProgress: false;
+      includeFinalState: false;
+    },
+  ): AsyncGenerator<StreamedTokens>;
+  /** @hidden */
+  askStream(
+    query: QueryAgentQuery,
+    options: QueryAgentAskStreamOptions & {
+      outputFormat?: undefined;
       includeProgress: false;
       includeFinalState?: true;
     },
@@ -287,6 +422,7 @@ export class QueryAgent {
   askStream(
     query: QueryAgentQuery,
     options: QueryAgentAskStreamOptions & {
+      outputFormat?: undefined;
       includeProgress?: true;
       includeFinalState: false;
     },
@@ -308,6 +444,10 @@ export class QueryAgent {
    *   `isPartialAnswer` fields of the response.
    *   If `"none"`, the result will not be evaluated, and the sources will not be filtered.
    *   Defaults to `"none"`.
+   * @param options.outputFormat - The structured output format to return. Either a Zod schema, a JSON Schema object, or undefined.
+   *   If a Zod schema is provided, the final answer will be parsed and validated into the schema, and the response will be returned as a `ParsedAskModeResponse` with the inferred type.
+   *   If a JSON Schema object is provided, the final answer will be parsed as JSON, and the response will be returned as a `ParsedAskModeResponse` with the type `Record<string, unknown>`.
+   *   If undefined, the final answer will be returned as a `AskModeResponse` with the type `string`.
    * @returns An async generator yielding any of the following:
    *
    * - {@link ProgressMessage}: informational messages about the progress of the agent's search
@@ -334,10 +474,41 @@ export class QueryAgent {
    *   }
    * }
    * ```
+   *
+   * @example Structured output with a Zod schema. When `includeFinalState` is on
+   * (the default), the final-state event is a {@link ParsedAskModeResponse} whose
+   * `finalAnswerParsed` is typed from the schema.
+   * ```ts
+   * import { z } from "zod";
+   *
+   * const CitedText = z.object({
+   *   text: z.string(),
+   *   sources: z
+   *     .array(z.string())
+   *     .describe("The sources that support this section of text. Can be empty."),
+   * });
+   * const AnswerWithSources = z.object({ texts: z.array(CitedText) });
+   *
+   * const agent = new QueryAgent(client, { collections: ["FinancialContracts"] });
+   * for await (const event of agent.askStream(
+   *   "What contracts were signed by Jane Doe in 2024? What were they about?",
+   *   { outputFormat: AnswerWithSources },
+   * )) {
+   *   if ("finalAnswerParsed" in event) {
+   *     // ParsedAskModeResponse — finalAnswerParsed is typed from the schema
+   *     console.log(event.finalAnswerParsed.texts);
+   *   } else if ("delta" in event) {
+   *     process.stdout.write(event.delta);
+   *   } else {
+   *     console.log(event.message);
+   *   }
+   * }
+   * ```
    */
   askStream(
     query: QueryAgentQuery,
     options?: QueryAgentAskStreamOptions & {
+      outputFormat?: undefined;
       includeProgress?: true;
       includeFinalState?: true;
     },
@@ -349,8 +520,14 @@ export class QueryAgent {
       includeProgress,
       includeFinalState,
       resultEvaluation,
-    }: QueryAgentAskStreamOptions = {},
-  ): AsyncGenerator<ProgressMessage | StreamedTokens | AskModeResponse> {
+      outputFormat,
+    }: QueryAgentAskStreamOptions & { outputFormat?: OutputFormat } = {},
+  ): AsyncGenerator<
+    | ProgressMessage
+    | StreamedTokens
+    | AskModeResponse
+    | ParsedAskModeResponse<unknown>
+  > {
     const targetCollections = collections ?? this.collections;
 
     if (!targetCollections) {
@@ -378,6 +555,7 @@ export class QueryAgent {
           include_progress: includeProgress ?? true,
           include_final_state: includeFinalState ?? true,
           result_evaluation: resultEvaluation ?? "none",
+          output_format: mapOutputFormat(outputFormat),
         }),
       },
     );
@@ -387,13 +565,21 @@ export class QueryAgent {
         await handleError(event.data);
       }
 
-      let output: ProgressMessage | StreamedTokens | AskModeResponse;
+      let output:
+        | ProgressMessage
+        | StreamedTokens
+        | AskModeResponse
+        | ParsedAskModeResponse<unknown>;
       if (event.event === "progress_message") {
         output = mapProgressMessageFromSSE(event);
       } else if (event.event === "streamed_tokens") {
         output = mapStreamedTokensFromSSE(event);
       } else if (event.event === "final_state") {
-        output = mapAskModeResponse(JSON.parse(event.data));
+        const finalState = JSON.parse(event.data);
+        output =
+          outputFormat === undefined
+            ? mapAskModeResponse(finalState)
+            : mapAskModeResponse(finalState, outputFormat);
       } else {
         throw new Error(`Unexpected event type: ${event.event}: ${event.data}`);
       }
@@ -521,6 +707,23 @@ export class QueryAgent {
     return targetCollections;
   };
 }
+
+/**
+ * Convert a user-supplied {@link OutputFormat} into the JSON Schema the agents
+ * API expects on the request body: a Zod schema is serialised to a Draft
+ * 2020-12 JSON Schema, a raw JSON Schema object is sent through unchanged, and
+ * `undefined` (no structured output) stays `undefined`.
+ */
+const mapOutputFormat = (
+  outputFormat: OutputFormat | undefined,
+): Record<string, unknown> | undefined => {
+  if (outputFormat === undefined) {
+    return undefined;
+  }
+  return isZodSchema(outputFormat)
+    ? z.toJSONSchema(outputFormat, { target: "draft-2020-12" })
+    : outputFormat;
+};
 
 /** Options for constructing a {@link QueryAgent}. */
 export type QueryAgentOptions = {

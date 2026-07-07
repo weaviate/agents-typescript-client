@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { WeaviateClient } from "weaviate-client";
 import { QueryAgent } from "./agent.js";
 import { ApiQueryAgentResponse } from "./response/api-response.js";
@@ -6,6 +7,7 @@ import {
   ComparisonOperator,
   AskModeResponse,
   SuggestQueryResponse,
+  ParsedAskModeResponse,
 } from "./response/response.js";
 import {
   ApiSearchModeResponse,
@@ -886,4 +888,151 @@ it("suggest queries mode failure propagates QueryAgentError", async () => {
       details: { info: "bad request" },
     });
   }
+});
+
+const mockClient = () =>
+  ({
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  }) as unknown as WeaviateClient;
+
+const askApiResponse = (finalAnswer: string): ApiAskModeResponse => ({
+  searches: [],
+  aggregations: [],
+  usage: {
+    model_units: 1,
+    usage_in_plan: true,
+    remaining_plan_requests: 2,
+  },
+  total_time: 1.5,
+  is_partial_answer: false,
+  missing_information: [],
+  final_answer: finalAnswer,
+  sources: [],
+});
+
+it("ask with a Zod output format parses and validates the final answer", async () => {
+  const Answer = z.object({
+    answer: z.string(),
+    score: z.number(),
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const finalAnswer = JSON.stringify({ answer: "Paris", score: 0.9 });
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(askApiResponse(finalAnswer)),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient());
+
+  const response = await agent.ask("What is the capital of France?", {
+    collections: ["test-collection"],
+    outputFormat: Answer,
+  });
+
+  // The request carries the schema serialised to a Draft 2020-12 JSON Schema.
+  expect(capturedBodies[0].output_format).toEqual(
+    z.toJSONSchema(Answer, { target: "draft-2020-12" }),
+  );
+
+  // The raw string is still available, plus the parsed (and validated) object.
+  expect(response.finalAnswer).toBe(finalAnswer);
+  expect(response.finalAnswerParsed).toEqual({ answer: "Paris", score: 0.9 });
+
+  // Compile-time: the parsed type is inferred from the schema.
+  const parsed: ParsedAskModeResponse<z.infer<typeof Answer>> = response;
+  const score: number = parsed.finalAnswerParsed.score;
+  expect(score).toBe(0.9);
+});
+
+it("ask with a Zod output format throws when the answer violates the schema", async () => {
+  const Answer = z.object({ answer: z.string(), score: z.number() });
+
+  global.fetch = jest.fn(() =>
+    Promise.resolve({
+      ok: true,
+      // `score` is missing -> Zod validation must reject it.
+      json: () => Promise.resolve(askApiResponse('{"answer":"Paris"}')),
+    } as Response),
+  ) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient());
+
+  await expect(
+    agent.ask("What is the capital of France?", {
+      collections: ["test-collection"],
+      outputFormat: Answer,
+    }),
+  ).rejects.toThrow();
+});
+
+it("ask with a raw JSON Schema output format parses the final answer as JSON", async () => {
+  const jsonSchema: Record<string, unknown> = {
+    type: "object",
+    properties: { answer: { type: "string" } },
+    required: ["answer"],
+    additionalProperties: false,
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const finalAnswer = JSON.stringify({ answer: "Paris" });
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(askApiResponse(finalAnswer)),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient());
+
+  const response = await agent.ask("What is the capital of France?", {
+    collections: ["test-collection"],
+    outputFormat: jsonSchema,
+  });
+
+  // A raw JSON Schema is forwarded verbatim.
+  expect(capturedBodies[0].output_format).toEqual(jsonSchema);
+  expect(response.finalAnswer).toBe(finalAnswer);
+  expect(response.finalAnswerParsed).toEqual({ answer: "Paris" });
+});
+
+it("ask without an output format omits output_format and returns plain text", async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(askApiResponse("Plain text answer")),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient());
+
+  const response = await agent.ask("What is the capital of France?", {
+    collections: ["test-collection"],
+  });
+
+  expect(capturedBodies[0].output_format).toBeUndefined();
+  expect(response.finalAnswer).toBe("Plain text answer");
+  expect("finalAnswerParsed" in response).toBe(false);
 });

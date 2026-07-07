@@ -1,4 +1,5 @@
 import { WeaviateReturn, WeaviateObject } from "weaviate-client";
+import { z } from "zod";
 
 export type AskModeResponse = {
   outputType: "finalState";
@@ -11,6 +12,28 @@ export type AskModeResponse = {
   finalAnswer: string;
   sources?: Source[];
   display(): void;
+};
+
+/**
+ * A structured output format for the ask mode.
+ *
+ * Either a Zod schema (the equivalent of a Pydantic model — the final answer is
+ * parsed and validated into the inferred type), or a plain object holding a
+ * Draft 2020-12 JSON Schema (the final answer is parsed as JSON). Pass nothing
+ * for no structured output.
+ */
+export type OutputFormat = z.ZodType | Record<string, unknown>;
+
+/**
+ * An {@link AskModeResponse} where the final answer has been parsed into the
+ * requested structured output format.
+ *
+ * `T` is the inferred type of the Zod schema (`z.infer<typeof schema>`) when a
+ * schema was passed, or `Record<string, unknown>` when a raw JSON Schema was.
+ */
+export type ParsedAskModeResponse<T> = AskModeResponse & {
+  /** The final answer parsed into the requested output format. */
+  finalAnswerParsed: T;
 };
 
 export type Search = {
