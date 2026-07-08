@@ -606,6 +606,10 @@ export class QueryAgent {
    *   Defaults to no diversity.
    * @param options.filtering - The filtering strategy: `"recall"` for broader retrieval or
    *   `"precision"` for more targeted results. Defaults to `"recall"`.
+   * @param options.rankingInstructions - Optional natural language instructions for the
+   *   instruction-following reranker, guiding which results to prioritize as most relevant.
+   *   Only affects the ordering of results, not which results are retrieved. Limited to
+   *   roughly 500 tokens, enforced server-side.
    * @returns A {@link SearchModeResponse} for the first page of results. Use
    *   `response.next({ limit, offset })` to paginate.
    *
@@ -624,6 +628,7 @@ export class QueryAgent {
       collections,
       diversityWeight,
       filtering,
+      rankingInstructions,
     }: QueryAgentSearchOnlyOptions = {},
   ): Promise<SearchModeResponse> {
     const searcher = new QueryAgentSearcher(
@@ -634,6 +639,7 @@ export class QueryAgent {
       this.agentsHost,
       diversityWeight,
       filtering,
+      rankingInstructions,
     );
 
     return searcher.run({ limit, offset: 0 });
@@ -847,6 +853,12 @@ export type QueryAgentSearchOnlyOptions = {
    * (narrower, more targeted retrieval).
    */
   filtering?: "recall" | "precision";
+  /**
+   * Optional natural language instructions for the instruction-following reranker, guiding
+   * which results to prioritize as most relevant. Only affects the ordering of results, not
+   * which results are retrieved. Limited to roughly 500 tokens, enforced server-side.
+   */
+  rankingInstructions?: string;
 };
 
 /** Options for {@link QueryAgent.suggestQueries}. */

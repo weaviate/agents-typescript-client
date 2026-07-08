@@ -640,6 +640,112 @@ it("search-only mode defaults filtering to recall", async () => {
   expect(capturedBodies[0].filtering).toBeUndefined();
 });
 
+it("search-only mode sends ranking_instructions verbatim and persists through pagination", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const apiSuccess: ApiSearchModeResponse = {
+    searches: [
+      {
+        query: "search query",
+        collection: "test_collection",
+      },
+    ],
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 2,
+    },
+    total_time: 1.0,
+    search_results: { objects: [] },
+  };
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient);
+
+  const instructions = "Prioritize the most recent documents.";
+  const first = await agent.search("test query", {
+    collections: ["test_collection"],
+    rankingInstructions: instructions,
+  });
+
+  // First (generation) request should include the instructions verbatim
+  expect(capturedBodies[0].ranking_instructions).toBe(instructions);
+
+  // Paginated (execution) request should also include them
+  await first.next({ limit: 20, offset: 1 });
+  expect(capturedBodies[1].ranking_instructions).toBe(instructions);
+});
+
+it("search-only mode sends null ranking_instructions when not provided", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const apiSuccess: ApiSearchModeResponse = {
+    searches: [
+      {
+        query: "search query",
+        collection: "test_collection",
+      },
+    ],
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 2,
+    },
+    total_time: 1.0,
+    search_results: { objects: [] },
+  };
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient);
+
+  const first = await agent.search("test query", {
+    collections: ["test_collection"],
+  });
+
+  // The server treats null and absent identically; the client must not invent
+  // a default (e.g. empty string, which is semantically different server-side)
+  expect(capturedBodies[0].ranking_instructions).toBeNull();
+
+  await first.next({ limit: 20, offset: 1 });
+  expect(capturedBodies[1].ranking_instructions).toBeNull();
+});
+
 it("search-only mode caches empty searches array for precision mode pagination", async () => {
   const mockClient = {
     getConnectionDetails: jest.fn().mockResolvedValue({
