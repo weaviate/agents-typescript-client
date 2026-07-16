@@ -1,6 +1,6 @@
 {
   "name": "weaviate-agents",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "JS/TS client for Weaviate Agents",
   "exports": "./dist/index.js",
   "type": "module",
@@ -28,7 +28,8 @@
     "dist"
   ],
   "peerDependencies": {
-    "weaviate-client": "^3.5.4"
+    "weaviate-client": "^3.5.4",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
@@ -41,6 +42,7 @@
     "typedoc": "^0.28.15",
     "typedoc-plugin-extras": "^4.0.1",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.32.1"
+    "typescript-eslint": "^8.32.1",
+    "zod": "^4.4.3"
   }
 }
