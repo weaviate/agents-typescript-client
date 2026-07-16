@@ -890,6 +890,101 @@ it("suggest queries mode failure propagates QueryAgentError", async () => {
   }
 });
 
+it("suggest queries with conversation includes conversation_context in request body", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const apiSuccess: ApiSuggestQueryResponse = {
+    queries: [{ query: "Follow-up question?" }],
+    collection_count: 1,
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 10,
+    },
+    total_time: 0.3,
+  };
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient);
+
+  const conversation = [
+    { role: "user" as const, content: "What topics are covered?" },
+    {
+      role: "assistant" as const,
+      content: "The collection covers ML and economics.",
+    },
+  ];
+
+  await agent.suggestQueries({
+    collections: ["test_collection"],
+    conversation,
+  });
+
+  expect(capturedBodies[0].conversation_context).toEqual({
+    messages: conversation,
+  });
+});
+
+it("suggest queries without conversation omits conversation_context from request body", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const apiSuccess: ApiSuggestQueryResponse = {
+    queries: [{ query: "Some query?" }],
+    collection_count: 1,
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 10,
+    },
+    total_time: 0.2,
+  };
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient);
+
+  await agent.suggestQueries({
+    collections: ["test_collection"],
+  });
+
+  expect(capturedBodies[0].conversation_context).toBeUndefined();
+});
+
 const mockClient = () =>
   ({
     getConnectionDetails: jest.fn().mockResolvedValue({
