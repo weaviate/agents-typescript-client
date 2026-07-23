@@ -694,7 +694,7 @@ it("search-only mode sends ranking_instructions verbatim and persists through pa
   expect(capturedBodies[1].ranking_instructions).toBe(instructions);
 });
 
-it("search-only mode sends null ranking_instructions when not provided", async () => {
+it("search-only mode omits ranking_instructions when not provided", async () => {
   const mockClient = {
     getConnectionDetails: jest.fn().mockResolvedValue({
       host: "test-cluster",
@@ -740,10 +740,10 @@ it("search-only mode sends null ranking_instructions when not provided", async (
 
   // The server treats null and absent identically; the client must not invent
   // a default (e.g. empty string, which is semantically different server-side)
-  expect(capturedBodies[0].ranking_instructions).toBeNull();
+  expect(capturedBodies[0]).not.toHaveProperty("ranking_instructions");
 
   await first.next({ limit: 20, offset: 1 });
-  expect(capturedBodies[1].ranking_instructions).toBeNull();
+  expect(capturedBodies[1]).not.toHaveProperty("ranking_instructions");
 });
 
 it("search-only mode caches empty searches array for precision mode pagination", async () => {

@@ -44,7 +44,7 @@ export class QueryAgentSearcher {
       collections: mapCollections(this.collections),
       limit,
       offset,
-      ranking_instructions: this.rankingInstructions ?? null,
+      ranking_instructions: this.rankingInstructions,
     } as const;
     if (this.cachedSearches === undefined) {
       return {
