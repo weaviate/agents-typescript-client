@@ -606,6 +606,9 @@ export class QueryAgent {
    *   Defaults to no diversity.
    * @param options.filtering - The filtering strategy: `"recall"` for broader retrieval or
    *   `"precision"` for more targeted results. Defaults to `"recall"`.
+   * @param options.effort - The amount of effort the agent should put into the search. One of
+   *   `"low"`, `"medium"`, or `"high"`. Higher effort may improve result quality at the expense
+   *   of increased latency and cost.
    * @returns A {@link SearchModeResponse} for the first page of results. Use
    *   `response.next({ limit, offset })` to paginate.
    *
@@ -624,6 +627,7 @@ export class QueryAgent {
       collections,
       diversityWeight,
       filtering,
+      effort,
     }: QueryAgentSearchOnlyOptions = {},
   ): Promise<SearchModeResponse> {
     const searcher = new QueryAgentSearcher(
@@ -634,6 +638,7 @@ export class QueryAgent {
       this.agentsHost,
       diversityWeight,
       filtering,
+      effort,
     );
 
     return searcher.run({ limit, offset: 0 });
@@ -857,6 +862,12 @@ export type QueryAgentSearchOnlyOptions = {
    * (narrower, more targeted retrieval).
    */
   filtering?: "recall" | "precision";
+  /**
+   * The amount of effort the agent should put into the search. One of `"low"`, `"medium"`, or
+   * `"high"`. Higher effort may improve result quality at the expense of increased latency and
+   * cost.
+   */
+  effort?: "low" | "medium" | "high";
 };
 
 /** Options for {@link QueryAgent.suggestQueries}. */

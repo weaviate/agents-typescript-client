@@ -640,6 +640,107 @@ it("search-only mode defaults filtering to recall", async () => {
   expect(capturedBodies[0].filtering).toBeUndefined();
 });
 
+it("search-only mode sends effort and persists through pagination", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const apiSuccess: ApiSearchModeResponse = {
+    searches: [
+      {
+        query: "search query",
+        collection: "test_collection",
+      },
+    ],
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 2,
+    },
+    total_time: 1.0,
+    search_results: { objects: [] },
+  };
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient);
+
+  const first = await agent.search("test query", {
+    collections: ["test_collection"],
+    effort: "high",
+  });
+
+  // First request should include effort
+  expect(capturedBodies[0].effort).toBe("high");
+
+  // Paginated request should also include effort
+  await first.next({ limit: 20, offset: 1 });
+  expect(capturedBodies[1].effort).toBe("high");
+});
+
+it("search-only mode defaults effort to null when not provided", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const apiSuccess: ApiSearchModeResponse = {
+    searches: [
+      {
+        query: "search query",
+        collection: "test_collection",
+      },
+    ],
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 2,
+    },
+    total_time: 1.0,
+    search_results: { objects: [] },
+  };
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient);
+
+  await agent.search("test query", {
+    collections: ["test_collection"],
+  });
+
+  // When no effort is specified, it should be sent as null (server-side default)
+  expect(capturedBodies[0].effort).toBeNull();
+});
+
 it("search-only mode caches empty searches array for precision mode pagination", async () => {
   const mockClient = {
     getConnectionDetails: jest.fn().mockResolvedValue({

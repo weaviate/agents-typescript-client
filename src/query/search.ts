@@ -29,6 +29,7 @@ export class QueryAgentSearcher {
     private agentsHost: string,
     private diversityWeight: number | undefined,
     private filtering: "recall" | "precision" | undefined,
+    private effort: "low" | "medium" | "high" | undefined,
   ) {}
 
   private buildRequestBody(
@@ -43,6 +44,7 @@ export class QueryAgentSearcher {
       collections: mapCollections(this.collections),
       limit,
       offset,
+      effort: this.effort ?? null,
     } as const;
     if (this.cachedSearches === undefined) {
       return {
