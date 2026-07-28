@@ -693,7 +693,7 @@ it("search-only mode sends effort and persists through pagination", async () => 
   expect(capturedBodies[1].effort).toBe("high");
 });
 
-it("search-only mode defaults effort to null when not provided", async () => {
+it("search-only mode omits effort when not provided", async () => {
   const mockClient = {
     getConnectionDetails: jest.fn().mockResolvedValue({
       host: "test-cluster",
@@ -737,8 +737,8 @@ it("search-only mode defaults effort to null when not provided", async () => {
     collections: ["test_collection"],
   });
 
-  // When no effort is specified, it should be sent as null (server-side default)
-  expect(capturedBodies[0].effort).toBeNull();
+  // When no effort is specified, it should not be sent (server-side default)
+  expect(capturedBodies[0].effort).toBeUndefined();
 });
 
 it("search-only mode caches empty searches array for precision mode pagination", async () => {

@@ -44,7 +44,6 @@ export class QueryAgentSearcher {
       collections: mapCollections(this.collections),
       limit,
       offset,
-      effort: this.effort ?? null,
     } as const;
     if (this.cachedSearches === undefined) {
       return {
@@ -53,12 +52,14 @@ export class QueryAgentSearcher {
         system_prompt: this.systemPrompt || null,
         diversity_weight: this.diversityWeight ?? null,
         ...(this.filtering !== undefined && { filtering: this.filtering }),
+        ...(this.effort !== undefined && { effort: this.effort }),
       };
     }
     return {
       ...base,
       searches: this.cachedSearches,
       ...(this.filtering !== undefined && { filtering: this.filtering }),
+      ...(this.effort !== undefined && { effort: this.effort }),
     };
   }
 
