@@ -37,6 +37,8 @@ export class QueryAgentSearcher {
     offset: number,
     connectionHeaders: HeadersInit | undefined,
   ) {
+    // Fields that apply to every request (both the initial search generation
+    // and subsequent pagination requests) belong on `base`.
     const base = {
       headers: connectionHeaders,
       original_query:
@@ -44,22 +46,20 @@ export class QueryAgentSearcher {
       collections: mapCollections(this.collections),
       limit,
       offset,
+      diversity_weight: this.diversityWeight ?? null,
+      ...(this.filtering !== undefined && { filtering: this.filtering }),
+      ...(this.effort !== undefined && { effort: this.effort }),
     } as const;
     if (this.cachedSearches === undefined) {
       return {
         ...base,
         searches: null,
         system_prompt: this.systemPrompt || null,
-        diversity_weight: this.diversityWeight ?? null,
-        ...(this.filtering !== undefined && { filtering: this.filtering }),
-        ...(this.effort !== undefined && { effort: this.effort }),
       };
     }
     return {
       ...base,
       searches: this.cachedSearches,
-      ...(this.filtering !== undefined && { filtering: this.filtering }),
-      ...(this.effort !== undefined && { effort: this.effort }),
     };
   }
 

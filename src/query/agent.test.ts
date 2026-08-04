@@ -485,11 +485,15 @@ it("search-only mode sends diversity_weight when provided", async () => {
   const agent = new QueryAgent(mockClient);
 
   // With diversityWeight provided
-  await agent.search("test query", {
+  const first = await agent.search("test query", {
     collections: ["test_collection"],
     diversityWeight: 0.5,
   });
   expect(capturedBodies[0].diversity_weight).toBe(0.5);
+
+  // Paginated request should also include diversity_weight
+  await first.next({ limit: 20, offset: 1 });
+  expect(capturedBodies[1].diversity_weight).toBe(0.5);
 
   // Without diversityWeight provided
   capturedBodies.length = 0;
