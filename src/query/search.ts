@@ -46,7 +46,7 @@ export class QueryAgentSearcher {
       collections: mapCollections(this.collections),
       limit,
       offset,
-      diversity_weight: this.diversityWeight ?? null,
+      diversity_weight: this.diversityWeight,
       ...(this.filtering !== undefined && { filtering: this.filtering }),
       ...(this.effort !== undefined && { effort: this.effort }),
     } as const;
