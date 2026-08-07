@@ -47,8 +47,8 @@ export class QueryAgentSearcher {
       limit,
       offset,
       diversity_weight: this.diversityWeight,
-      ...(this.filtering !== undefined && { filtering: this.filtering }),
-      ...(this.effort !== undefined && { effort: this.effort }),
+      filtering: this.filtering,
+      effort: this.effort,
     } as const;
     if (this.cachedSearches === undefined) {
       return {

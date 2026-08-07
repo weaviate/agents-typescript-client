@@ -500,7 +500,7 @@ it("search-only mode sends diversity_weight when provided", async () => {
   await agent.search("test query", {
     collections: ["test_collection"],
   });
-  expect(capturedBodies[0].diversity_weight).toBeNull();
+  expect(capturedBodies[0]).not.toHaveProperty("diversity_weight");
 });
 
 it("search-only mode failure propagates QueryAgentError", async () => {
