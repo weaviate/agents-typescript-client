@@ -607,8 +607,8 @@ export class QueryAgent {
    * @param options.filtering - The filtering strategy: `"recall"` for broader retrieval or
    *   `"precision"` for more targeted results. Defaults to `"recall"`.
    * @param options.effort - The amount of effort the agent should put into the search. One of
-   *   `"low"`, `"medium"`, or `"high"`. Higher effort may improve result quality at the expense
-   *   of increased latency and cost.
+   *   `"medium"`, `"high"`, or `"ultrahigh"`. Higher effort may improve result quality at the
+   *   expense of increased latency and cost.
    * @returns A {@link SearchModeResponse} for the first page of results. Use
    *   `response.next({ limit, offset })` to paginate.
    *
@@ -863,11 +863,11 @@ export type QueryAgentSearchOnlyOptions = {
    */
   filtering?: "recall" | "precision";
   /**
-   * The amount of effort the agent should put into the search. One of `"low"`, `"medium"`, or
-   * `"high"`. Higher effort may improve result quality at the expense of increased latency and
-   * cost.
+   * The amount of effort the agent should put into the search. One of `"medium"`, `"high"`, or
+   * `"ultrahigh"`. Higher effort may improve result quality at the expense of increased latency
+   * and cost.
    */
-  effort?: "low" | "medium" | "high";
+  effort?: "medium" | "high" | "ultrahigh";
 };
 
 /** Options for {@link QueryAgent.suggestQueries}. */

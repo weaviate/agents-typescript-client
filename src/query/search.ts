@@ -29,7 +29,7 @@ export class QueryAgentSearcher {
     private agentsHost: string,
     private diversityWeight: number | undefined,
     private filtering: "recall" | "precision" | undefined,
-    private effort: "low" | "medium" | "high" | undefined,
+    private effort: "medium" | "high" | "ultrahigh" | undefined,
   ) {}
 
   private buildRequestBody(

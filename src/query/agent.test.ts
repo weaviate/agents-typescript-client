@@ -686,15 +686,15 @@ it("search-only mode sends effort and persists through pagination", async () => 
 
   const first = await agent.search("test query", {
     collections: ["test_collection"],
-    effort: "high",
+    effort: "ultrahigh",
   });
 
   // First request should include effort
-  expect(capturedBodies[0].effort).toBe("high");
+  expect(capturedBodies[0].effort).toBe("ultrahigh");
 
   // Paginated request should also include effort
   await first.next({ limit: 20, offset: 1 });
-  expect(capturedBodies[1].effort).toBe("high");
+  expect(capturedBodies[1].effort).toBe("ultrahigh");
 });
 
 it("search-only mode omits effort when not provided", async () => {
