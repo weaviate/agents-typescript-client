@@ -485,18 +485,22 @@ it("search-only mode sends diversity_weight when provided", async () => {
   const agent = new QueryAgent(mockClient);
 
   // With diversityWeight provided
-  await agent.search("test query", {
+  const first = await agent.search("test query", {
     collections: ["test_collection"],
     diversityWeight: 0.5,
   });
   expect(capturedBodies[0].diversity_weight).toBe(0.5);
+
+  // Paginated request should also include diversity_weight
+  await first.next({ limit: 20, offset: 1 });
+  expect(capturedBodies[1].diversity_weight).toBe(0.5);
 
   // Without diversityWeight provided
   capturedBodies.length = 0;
   await agent.search("test query", {
     collections: ["test_collection"],
   });
-  expect(capturedBodies[0].diversity_weight).toBeNull();
+  expect(capturedBodies[0]).not.toHaveProperty("diversity_weight");
 });
 
 it("search-only mode failure propagates QueryAgentError", async () => {
@@ -638,6 +642,107 @@ it("search-only mode defaults filtering to recall", async () => {
 
   // When no filtering is specified, it should not be sent (server-side default)
   expect(capturedBodies[0].filtering).toBeUndefined();
+});
+
+it("search-only mode sends effort and persists through pagination", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const apiSuccess: ApiSearchModeResponse = {
+    searches: [
+      {
+        query: "search query",
+        collection: "test_collection",
+      },
+    ],
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 2,
+    },
+    total_time: 1.0,
+    search_results: { objects: [] },
+  };
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient);
+
+  const first = await agent.search("test query", {
+    collections: ["test_collection"],
+    effort: "ultrahigh",
+  });
+
+  // First request should include effort
+  expect(capturedBodies[0].effort).toBe("ultrahigh");
+
+  // Paginated request should also include effort
+  await first.next({ limit: 20, offset: 1 });
+  expect(capturedBodies[1].effort).toBe("ultrahigh");
+});
+
+it("search-only mode omits effort when not provided", async () => {
+  const mockClient = {
+    getConnectionDetails: jest.fn().mockResolvedValue({
+      host: "test-cluster",
+      bearerToken: "test-token",
+      headers: { "X-Provider": "test-key" },
+    }),
+  } as unknown as WeaviateClient;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const apiSuccess: ApiSearchModeResponse = {
+    searches: [
+      {
+        query: "search query",
+        collection: "test_collection",
+      },
+    ],
+    usage: {
+      model_units: 1,
+      usage_in_plan: true,
+      remaining_plan_requests: 2,
+    },
+    total_time: 1.0,
+    search_results: { objects: [] },
+  };
+
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(apiSuccess),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient);
+
+  await agent.search("test query", {
+    collections: ["test_collection"],
+  });
+
+  // When no effort is specified, it should not be sent (server-side default)
+  expect(capturedBodies[0].effort).toBeUndefined();
 });
 
 it("search-only mode caches empty searches array for precision mode pagination", async () => {
