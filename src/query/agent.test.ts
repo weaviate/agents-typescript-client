@@ -15,6 +15,7 @@ import {
   ApiSuggestQueryResponse,
 } from "./response/api-response.js";
 import { QueryAgentError } from "./response/error.js";
+import { QAImage, imageWithOptions } from "./media.js";
 
 it("runs the query agent", async () => {
   const mockClient = {
@@ -1210,6 +1211,47 @@ it("ask with a raw JSON Schema output format parses the final answer as JSON", a
   expect(capturedBodies[0].output_format).toEqual(jsonSchema);
   expect(response.finalAnswer).toBe(finalAnswer);
   expect(response.finalAnswerParsed).toEqual({ answer: "Paris" });
+});
+
+it("ask with an image output format hides base64 from the schema and parses the image", async () => {
+  const Answer = z.object({
+    answer: z.string(),
+    image: imageWithOptions({ shape: "square" }).describe("An advert"),
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const capturedBodies: any[] = [];
+
+  const image = { image_prompt: "a red shoe", base64: "QUJD" };
+  const finalAnswer = JSON.stringify({ answer: "A shoe", image });
+  global.fetch = jest.fn((url, init?: RequestInit) => {
+    if (init && init.body) {
+      capturedBodies.push(JSON.parse(init.body as string));
+    }
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(askApiResponse(finalAnswer)),
+    } as Response);
+  }) as jest.Mock;
+
+  const agent = new QueryAgent(mockClient());
+
+  const response = await agent.ask("Draw the best selling product", {
+    collections: ["test-collection"],
+    outputFormat: Answer,
+  });
+
+  // The image field is sent tagged, with its options and without base64, which the server fills.
+  const imageSchema = capturedBodies[0].output_format.properties.image;
+  expect(imageSchema["X-query-agent-image"]).toBe(true);
+  expect(imageSchema["X-image-shape"]).toBe("square");
+  expect(imageSchema.description).toBe("An advert");
+  expect(imageSchema.properties).not.toHaveProperty("base64");
+  expect(imageSchema.required).toEqual(["image_prompt"]);
+
+  // The answer parses back into the image, base64 included.
+  const parsedImage: QAImage = response.finalAnswerParsed.image;
+  expect(parsedImage).toEqual(image);
 });
 
 it("ask without an output format omits output_format and returns plain text", async () => {
