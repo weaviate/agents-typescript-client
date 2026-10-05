@@ -24,6 +24,15 @@ This package is to be used in conjunction with the [Weaviate TypeScript Client](
 ```bash
 npm install weaviate-client weaviate-agents
 ```
+Or with yarn / pnpm:
+
+```bash
+yarn add weaviate-client weaviate-agents
+```
+
+```bash
+pnpm add weaviate-client weaviate-agents
+```
 
 Requires Node 20+ and a [Weaviate Cloud](https://console.weaviate.cloud) cluster.
 
@@ -95,7 +104,7 @@ Search mode can be optionally customized with:
 
 - [Tutorials & Guides](https://docs.weaviate.io/query-agent/recipes) for getting started quickly with the Query Agent
 
-- [API reference manual](https://weaviate.github.io/agents-typescript-client/) for specific documentation on this client as well as examples
+- [API reference manual](https://weaviate.github.io/agents-typescript-client/index.html) for specific documentation on this client as well as examples
 
 # Support
 
