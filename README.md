@@ -24,6 +24,7 @@ This package is to be used in conjunction with the [Weaviate TypeScript Client](
 ```bash
 npm install weaviate-client weaviate-agents
 ```
+
 Or with yarn / pnpm:
 
 ```bash
