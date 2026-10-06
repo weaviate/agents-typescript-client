@@ -178,7 +178,7 @@ export class QueryAgent {
    * ```
    *
    * @example Image generation. Each image field is returned with the generated image
-   * as base64. Use {@link imageWithOptions} to set options such as the shape.
+   * as base64. Use {@link generatedImageWithOptions} to set options such as the shape.
    * ```ts
    * import { z } from "zod";
    * import { GeneratedImage } from "weaviate-agents";

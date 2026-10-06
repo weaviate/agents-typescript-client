@@ -7,6 +7,6 @@ export {
   GeneratedImage,
   ImageShape,
   ImageOptions,
-  imageWithOptions,
+  generatedImageWithOptions,
 } from "./media.js";
 export * from "./response/index.js";

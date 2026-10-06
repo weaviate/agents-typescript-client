@@ -23,7 +23,7 @@ export type ImageOptions = {
 };
 
 /** A {@link GeneratedImage} field generated with the given options. */
-export const imageWithOptions = ({ shape }: ImageOptions) =>
+export const generatedImageWithOptions = ({ shape }: ImageOptions) =>
   GeneratedImage.meta(shape === undefined ? {} : { "X-image-shape": shape });
 
 /** Hides `base64` from image nodes in the emitted JSON Schema, since the server adds it after generation. */

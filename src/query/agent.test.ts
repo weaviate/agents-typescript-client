@@ -15,7 +15,7 @@ import {
   ApiSuggestQueryResponse,
 } from "./response/api-response.js";
 import { QueryAgentError } from "./response/error.js";
-import { GeneratedImage, imageWithOptions } from "./media.js";
+import { GeneratedImage, generatedImageWithOptions } from "./media.js";
 
 it("runs the query agent", async () => {
   const mockClient = {
@@ -1216,7 +1216,7 @@ it("ask with a raw JSON Schema output format parses the final answer as JSON", a
 it("ask with an image output format hides base64 from the schema and parses the image", async () => {
   const Answer = z.object({
     answer: z.string(),
-    image: imageWithOptions({ shape: "square" }).describe("An advert"),
+    image: generatedImageWithOptions({ shape: "square" }).describe("An advert"),
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
