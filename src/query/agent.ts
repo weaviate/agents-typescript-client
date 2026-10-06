@@ -28,6 +28,7 @@ import { handleError } from "./response/error.js";
 import { QueryAgentSearcher } from "./search.js";
 import { SearchModeResponse } from "./response/response.js";
 import { getHeaders } from "./connection.js";
+import { hideImageBase64 } from "./media.js";
 
 /**
  * An agent for executing agentic queries against Weaviate.
@@ -141,6 +142,7 @@ export class QueryAgent {
    *   If a Zod schema is provided, the final answer will be parsed and validated into the schema, and the response will be returned as a {@link ParsedAskModeResponse} whose `finalAnswerParsed` is typed as `z.infer<typeof schema>`.
    *   If a JSON Schema object (Draft 2020-12) is provided, the final answer will be parsed as JSON, and the response will be returned as a {@link ParsedAskModeResponse} whose `finalAnswerParsed` is typed as `Record<string, unknown>`.
    *   If undefined (the default, no structured output), the answer is plain text on `finalAnswer` and an {@link AskModeResponse} is returned.
+   *   To generate an image, include a {@link GeneratedImage} field in a Zod schema. The generated image is returned as a base64 PNG on that field's `base64` in `finalAnswerParsed`.
    * @returns An {@link AskModeResponse} (or {@link ParsedAskModeResponse} when `outputFormat` is set)
    *   which contains the final answer, sources, and other metadata such as the searches performed,
    *   usage and total time.
@@ -173,6 +175,24 @@ export class QueryAgent {
    * );
    * // result.finalAnswerParsed is typed as { texts: { text: string; sources: string[] }[] }
    * console.log(result.finalAnswerParsed.texts);
+   * ```
+   *
+   * @example Image generation. Each image field is returned with the generated image
+   * as base64. Use {@link generatedImageWithOptions} to set options such as the shape.
+   * ```ts
+   * import { z } from "zod";
+   * import { GeneratedImage } from "weaviate-agents";
+   *
+   * const AnswerWithImage = z.object({
+   *   answer: z.string(),
+   *   image: GeneratedImage.describe("An advertisement for the product."),
+   * });
+   *
+   * const agent = new QueryAgent(client, { collections: ["ECommerce"] });
+   * const result = await agent.ask("What is the best selling product?", {
+   *   outputFormat: AnswerWithImage,
+   * });
+   * const imageBytes = Buffer.from(result.finalAnswerParsed.image.base64, "base64");
    * ```
    */
   ask(
@@ -448,6 +468,8 @@ export class QueryAgent {
    *   If a Zod schema is provided, the final answer will be parsed and validated into the schema, and the response will be returned as a `ParsedAskModeResponse` with the inferred type.
    *   If a JSON Schema object is provided, the final answer will be parsed as JSON, and the response will be returned as a `ParsedAskModeResponse` with the type `Record<string, unknown>`.
    *   If undefined, the final answer will be returned as a `AskModeResponse` with the type `string`.
+   *   To generate an image, include a {@link GeneratedImage} field in a Zod schema. The generated image is returned as a base64 PNG on that field's `base64` in `finalAnswerParsed`.
+   *   The streamed tokens of the final answer never include `base64`. It is added after generation, so it only appears in the final state.
    * @returns An async generator yielding any of the following:
    *
    * - {@link ProgressMessage}: informational messages about the progress of the agent's search
@@ -497,6 +519,30 @@ export class QueryAgent {
    *   if ("finalAnswerParsed" in event) {
    *     // ParsedAskModeResponse — finalAnswerParsed is typed from the schema
    *     console.log(event.finalAnswerParsed.texts);
+   *   } else if ("delta" in event) {
+   *     process.stdout.write(event.delta);
+   *   } else {
+   *     console.log(event.message);
+   *   }
+   * }
+   * ```
+   *
+   * @example Image generation. The image's base64 is only populated on the final state.
+   * ```ts
+   * import { z } from "zod";
+   * import { GeneratedImage } from "weaviate-agents";
+   *
+   * const AnswerWithImage = z.object({
+   *   answer: z.string(),
+   *   image: GeneratedImage.describe("An advertisement for the product."),
+   * });
+   *
+   * const agent = new QueryAgent(client, { collections: ["ECommerce"] });
+   * for await (const event of agent.askStream("What is the best selling product?", {
+   *   outputFormat: AnswerWithImage,
+   * })) {
+   *   if ("finalAnswerParsed" in event) {
+   *     const imageBytes = Buffer.from(event.finalAnswerParsed.image.base64, "base64");
    *   } else if ("delta" in event) {
    *     process.stdout.write(event.delta);
    *   } else {
@@ -736,7 +782,10 @@ const mapOutputFormat = (
     return undefined;
   }
   return isZodSchema(outputFormat)
-    ? z.toJSONSchema(outputFormat, { target: "draft-2020-12" })
+    ? z.toJSONSchema(outputFormat, {
+        target: "draft-2020-12",
+        override: hideImageBase64,
+      })
     : outputFormat;
 };
 
