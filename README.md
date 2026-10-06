@@ -96,6 +96,7 @@ Search mode can be optionally customized with:
 - Different filtering strategies for recall or precision based search priorities
 - Effort level to control search quality versus latency
 - Diversity weights to improve diversity amongst results
+- Pagination of the results set
 
 [Learn more about search mode in the official documentation.](https://docs.weaviate.io/query-agent/guides/search_mode)
 
