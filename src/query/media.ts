@@ -7,13 +7,13 @@ const imageKeyword = "X-query-agent-image";
  *
  * Lists of images need a `.max()`, and a schema may request at most 10 images in the worst case.
  */
-export const QAImage = z
+export const GeneratedImage = z
   .object({
     image_prompt: z.string(),
     base64: z.string(), // hidden from the agent's schema; the server fills it
   })
   .meta({ [imageKeyword]: true });
-export type QAImage = z.infer<typeof QAImage>;
+export type GeneratedImage = z.infer<typeof GeneratedImage>;
 
 export type ImageShape = "square" | "landscape" | "portrait";
 
@@ -22,9 +22,9 @@ export type ImageOptions = {
   shape?: ImageShape;
 };
 
-/** A {@link QAImage} field generated with the given options. */
+/** A {@link GeneratedImage} field generated with the given options. */
 export const imageWithOptions = ({ shape }: ImageOptions) =>
-  QAImage.meta(shape === undefined ? {} : { "X-image-shape": shape });
+  GeneratedImage.meta(shape === undefined ? {} : { "X-image-shape": shape });
 
 /** Hides `base64` from image nodes in the emitted JSON Schema, since the server adds it after generation. */
 export const hideImageBase64 = ({

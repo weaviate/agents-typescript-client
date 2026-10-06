@@ -4,7 +4,7 @@ export {
   QueryAgentCollectionConfig,
 } from "./collection.js";
 export {
-  QAImage,
+  GeneratedImage,
   ImageShape,
   ImageOptions,
   imageWithOptions,

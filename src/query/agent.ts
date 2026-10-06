@@ -142,7 +142,7 @@ export class QueryAgent {
    *   If a Zod schema is provided, the final answer will be parsed and validated into the schema, and the response will be returned as a {@link ParsedAskModeResponse} whose `finalAnswerParsed` is typed as `z.infer<typeof schema>`.
    *   If a JSON Schema object (Draft 2020-12) is provided, the final answer will be parsed as JSON, and the response will be returned as a {@link ParsedAskModeResponse} whose `finalAnswerParsed` is typed as `Record<string, unknown>`.
    *   If undefined (the default, no structured output), the answer is plain text on `finalAnswer` and an {@link AskModeResponse} is returned.
-   *   To generate an image, include a {@link QAImage} field in a Zod schema. The generated image is returned as a base64 PNG on that field's `base64` in `finalAnswerParsed`.
+   *   To generate an image, include a {@link GeneratedImage} field in a Zod schema. The generated image is returned as a base64 PNG on that field's `base64` in `finalAnswerParsed`.
    * @returns An {@link AskModeResponse} (or {@link ParsedAskModeResponse} when `outputFormat` is set)
    *   which contains the final answer, sources, and other metadata such as the searches performed,
    *   usage and total time.
@@ -181,11 +181,11 @@ export class QueryAgent {
    * as base64. Use {@link imageWithOptions} to set options such as the shape.
    * ```ts
    * import { z } from "zod";
-   * import { QAImage } from "weaviate-agents";
+   * import { GeneratedImage } from "weaviate-agents";
    *
    * const AnswerWithImage = z.object({
    *   answer: z.string(),
-   *   image: QAImage.describe("An advertisement for the product."),
+   *   image: GeneratedImage.describe("An advertisement for the product."),
    * });
    *
    * const agent = new QueryAgent(client, { collections: ["ECommerce"] });
@@ -468,7 +468,7 @@ export class QueryAgent {
    *   If a Zod schema is provided, the final answer will be parsed and validated into the schema, and the response will be returned as a `ParsedAskModeResponse` with the inferred type.
    *   If a JSON Schema object is provided, the final answer will be parsed as JSON, and the response will be returned as a `ParsedAskModeResponse` with the type `Record<string, unknown>`.
    *   If undefined, the final answer will be returned as a `AskModeResponse` with the type `string`.
-   *   To generate an image, include a {@link QAImage} field in a Zod schema. The generated image is returned as a base64 PNG on that field's `base64` in `finalAnswerParsed`.
+   *   To generate an image, include a {@link GeneratedImage} field in a Zod schema. The generated image is returned as a base64 PNG on that field's `base64` in `finalAnswerParsed`.
    *   The streamed tokens of the final answer never include `base64`. It is added after generation, so it only appears in the final state.
    * @returns An async generator yielding any of the following:
    *
@@ -530,11 +530,11 @@ export class QueryAgent {
    * @example Image generation. The image's base64 is only populated on the final state.
    * ```ts
    * import { z } from "zod";
-   * import { QAImage } from "weaviate-agents";
+   * import { GeneratedImage } from "weaviate-agents";
    *
    * const AnswerWithImage = z.object({
    *   answer: z.string(),
-   *   image: QAImage.describe("An advertisement for the product."),
+   *   image: GeneratedImage.describe("An advertisement for the product."),
    * });
    *
    * const agent = new QueryAgent(client, { collections: ["ECommerce"] });

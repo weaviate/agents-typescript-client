@@ -15,7 +15,7 @@ import {
   ApiSuggestQueryResponse,
 } from "./response/api-response.js";
 import { QueryAgentError } from "./response/error.js";
-import { QAImage, imageWithOptions } from "./media.js";
+import { GeneratedImage, imageWithOptions } from "./media.js";
 
 it("runs the query agent", async () => {
   const mockClient = {
@@ -1250,7 +1250,7 @@ it("ask with an image output format hides base64 from the schema and parses the 
   expect(imageSchema.required).toEqual(["image_prompt"]);
 
   // The answer parses back into the image, base64 included.
-  const parsedImage: QAImage = response.finalAnswerParsed.image;
+  const parsedImage: GeneratedImage = response.finalAnswerParsed.image;
   expect(parsedImage).toEqual(image);
 });
 
