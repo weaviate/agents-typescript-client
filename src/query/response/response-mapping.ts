@@ -1,4 +1,4 @@
-import { ReturnMetadata } from "weaviate-client";
+import { ReturnMetadata } from "@weaviate/core";
 
 import {
   QueryAgentResponse,

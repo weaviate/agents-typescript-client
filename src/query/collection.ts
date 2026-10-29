@@ -1,4 +1,4 @@
-import { FilterValue } from "weaviate-client";
+import { FilterValue } from "@weaviate/core";
 import { mapFilter } from "./filter.js";
 
 export const mapCollections = (

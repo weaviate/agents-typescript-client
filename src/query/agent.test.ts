@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { WeaviateClient } from "weaviate-client";
+import { WeaviateClient } from "@weaviate/core";
 import { QueryAgent } from "./agent.js";
 import { ApiQueryAgentResponse } from "./response/api-response.js";
 import {

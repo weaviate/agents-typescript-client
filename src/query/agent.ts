@@ -1,4 +1,4 @@
-import { WeaviateClient } from "weaviate-client";
+import { WeaviateClient } from "@weaviate/core";
 import { z } from "zod";
 import {
   QueryAgentResponse,
@@ -181,7 +181,7 @@ export class QueryAgent {
    * as base64. Use {@link generatedImageWithOptions} to set options such as the shape.
    * ```ts
    * import { z } from "zod";
-   * import { GeneratedImage } from "weaviate-agents";
+   * import { GeneratedImage } from "@weaviate/agents";
    *
    * const AnswerWithImage = z.object({
    *   answer: z.string(),
@@ -530,7 +530,7 @@ export class QueryAgent {
    * @example Image generation. The image's base64 is only populated on the final state.
    * ```ts
    * import { z } from "zod";
-   * import { GeneratedImage } from "weaviate-agents";
+   * import { GeneratedImage } from "@weaviate/agents";
    *
    * const AnswerWithImage = z.object({
    *   answer: z.string(),

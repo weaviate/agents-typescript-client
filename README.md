@@ -12,27 +12,27 @@
 
 <p align="center">
   <a href="https://github.com/weaviate/agents-typescript-client/actions"><img src="https://github.com/weaviate/agents-typescript-client/actions/workflows/main.yaml/badge.svg?branch=main" alt="Main Branch"></a>
-  <a href="https://www.npmjs.com/package/weaviate-agents"><img src="https://img.shields.io/npm/v/weaviate-agents" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@weaviate/agents"><img src="https://img.shields.io/npm/v/@weaviate/agents" alt="npm version"></a>
 </p>
 
 Weaviate Agents allow you to automatically interface with your Weaviate collections without writing any complex code.
 
 # Installation
 
-This package is to be used in conjunction with the [Weaviate TypeScript Client](https://github.com/weaviate/typescript-client), which is a peer dependency.
+This package is to be used in conjunction with the [Weaviate TypeScript Client](https://github.com/weaviate/typescript-client). Install `@weaviate/node` for Node.js or `@weaviate/web` for browsers; both provide `@weaviate/core`, which is a peer dependency.
 
 ```bash
-npm install weaviate-client weaviate-agents
+npm install @weaviate/node @weaviate/agents
 ```
 
 Or with yarn / pnpm:
 
 ```bash
-yarn add weaviate-client weaviate-agents
+yarn add @weaviate/node @weaviate/agents
 ```
 
 ```bash
-pnpm add weaviate-client weaviate-agents
+pnpm add @weaviate/node @weaviate/agents
 ```
 
 Requires Node 20+ and a [Weaviate Cloud](https://console.weaviate.cloud) cluster.
@@ -53,8 +53,8 @@ It returns accurate and relevant results with source citations. It replaces manu
 **Ask mode** is natural-language in and natural-language out. It searches or aggregates your data, depending on the user's query, and then answers the question with respect to the retrieved data. This can be accessed using the `ask()` or `askStream()` methods, depending on whether your application needs streaming tokens and progress messages.
 
 ```ts
-import weaviate from "weaviate-client";
-import { QueryAgent } from "weaviate-agents";
+import weaviate from "@weaviate/node";
+import { QueryAgent } from "@weaviate/agents";
 
 const client = await weaviate.connectToWeaviateCloud(clusterUrl, {
   authCredentials,
@@ -79,7 +79,7 @@ Ask mode can be optionally customized with:
 **Search mode** is designed for high quality information retrieval with strong recall and controlled precision, without the final-answer generation. This can be accessed using the `search()` method.
 
 ```ts
-import { QueryAgent } from "weaviate-agents";
+import { QueryAgent } from "@weaviate/agents";
 
 const qa = new QueryAgent(client, {
   collections: ["ECommerce"],
