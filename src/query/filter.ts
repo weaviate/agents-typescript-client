@@ -1,4 +1,4 @@
-import { FilterValue, Operator } from "weaviate-client";
+import { FilterValue, Operator } from "@weaviate/core";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const mapFilter = (filters: FilterValue): any =>

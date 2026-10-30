@@ -1,4 +1,4 @@
-import { WeaviateClient } from "weaviate-client";
+import { WeaviateClient } from "@weaviate/core";
 
 export const getHeaders = async (client: WeaviateClient) => {
   const {

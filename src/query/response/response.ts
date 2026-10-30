@@ -1,4 +1,4 @@
-import { WeaviateReturn, WeaviateObject } from "weaviate-client";
+import { WeaviateReturn, WeaviateObject } from "@weaviate/core";
 import { z } from "zod";
 
 export type AskModeResponse = {
@@ -347,11 +347,17 @@ export type StreamedTokens = {
   delta: string;
 };
 
-export type WeaviateObjectWithCollection = WeaviateObject<undefined> & {
+export type WeaviateObjectWithCollection = WeaviateObject<
+  undefined,
+  undefined
+> & {
   collection: string;
 };
 
-export type WeaviateReturnWithCollection = WeaviateReturn<undefined> & {
+export type WeaviateReturnWithCollection = WeaviateReturn<
+  undefined,
+  undefined
+> & {
   objects: WeaviateObjectWithCollection[];
 };
 

@@ -1,4 +1,4 @@
-import { Vectors, WeaviateField } from "weaviate-client";
+import { Vectors, WeaviateField } from "@weaviate/core";
 
 import {
   NumericMetrics,

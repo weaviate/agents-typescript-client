@@ -1,4 +1,4 @@
-import { WeaviateClient } from "weaviate-client";
+import { WeaviateClient } from "@weaviate/core";
 import {
   SearchExecutionOptions,
   SearchModeResponse,
