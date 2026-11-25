@@ -79,6 +79,7 @@ export function mapAskModeResponse(
       aggregation: mapPropertyAggregation(aggregation.aggregation),
       filters: aggregation.filters ? mapFilter(aggregation.filters) : undefined,
       collection: aggregation.collection,
+      tenant: aggregation.tenant,
     })),
     usage: mapUsage(response.usage),
     totalTime: response.total_time,
@@ -120,6 +121,7 @@ const mapSearches = (searches: ApiSearch[]): Search[] =>
       ? mapQuerySort(search.sort_property)
       : undefined,
     uuidValue: search.uuid_value,
+    tenant: search.tenant,
   }));
 
 const mapQuerySort = (sort: ApiQuerySort): QuerySort => ({
@@ -355,6 +357,7 @@ const mapSources = (sources: ApiSource[]): Source[] =>
   sources.map((source) => ({
     objectId: source.object_id,
     collection: source.collection,
+    tenant: source.tenant,
   }));
 
 const display = (

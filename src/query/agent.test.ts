@@ -150,6 +150,7 @@ it("runs the query agent ask", async () => {
           },
         },
         uuid_value: "e6dc0a31-76f8-4bd3-b563-677ced6eb557",
+        tenant: "tenant_a",
       },
     ],
     aggregations: [],
@@ -166,6 +167,7 @@ it("runs the query agent ask", async () => {
       {
         object_id: "123",
         collection: "test-collection",
+        tenant: "tenant_a",
       },
     ],
   };
@@ -218,6 +220,7 @@ it("runs the query agent ask", async () => {
           },
         },
         uuidValue: "e6dc0a31-76f8-4bd3-b563-677ced6eb557",
+        tenant: "tenant_a",
       },
     ],
     aggregations: [],
@@ -234,6 +237,7 @@ it("runs the query agent ask", async () => {
       {
         objectId: "123",
         collection: "test-collection",
+        tenant: "tenant_a",
       },
     ],
     display: expect.any(Function),
@@ -264,6 +268,7 @@ it("search-only mode success: caches searches and sends on subsequent request", 
         collection: "test_collection",
         sort_property: undefined,
         uuid_value: undefined,
+        tenant: "tenant_a",
       },
       {
         query: undefined,

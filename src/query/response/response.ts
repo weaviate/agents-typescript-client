@@ -42,6 +42,7 @@ export type Search = {
   collection: string;
   sortProperty?: QuerySort;
   uuidValue?: string;
+  tenant?: string;
 };
 
 export type Aggregation = {
@@ -49,6 +50,7 @@ export type Aggregation = {
   aggregation: PropertyAggregation;
   filters?: PropertyFilter | FilterAndOr;
   collection: string;
+  tenant?: string;
 };
 
 export type FilterAndOr = {
@@ -324,6 +326,7 @@ export type Usage = {
 export type Source = {
   objectId: string;
   collection: string;
+  tenant?: string;
 };
 
 export type QueryWithCollection = {

@@ -31,6 +31,7 @@ export type ApiSearch = {
   collection: string;
   sort_property?: ApiQuerySort;
   uuid_value?: string;
+  tenant?: string;
 };
 
 export type ApiAggregation = {
@@ -38,6 +39,7 @@ export type ApiAggregation = {
   aggregation: ApiPropertyAggregation;
   filters?: ApiPropertyFilter | ApiFilterAndOr;
   collection: string;
+  tenant?: string;
 };
 
 export type ApiFilterAndOr = {
@@ -235,6 +237,7 @@ export type ApiUsage = {
 export type ApiSource = {
   object_id: string;
   collection: string;
+  tenant?: string;
 };
 
 export type ApiReturnMetadata = {
