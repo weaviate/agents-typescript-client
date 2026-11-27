@@ -1,4 +1,5 @@
-import { z } from "zod";
+import { z } from "zod/v4";
+import { z as z3 } from "zod/v3";
 import { WeaviateClient } from "@weaviate/core";
 import { QueryAgent } from "./agent.js";
 import { ApiQueryAgentResponse } from "./response/api-response.js";
@@ -1181,6 +1182,21 @@ it("ask with a Zod output format throws when the answer violates the schema", as
       outputFormat: Answer,
     }),
   ).rejects.toThrow();
+});
+
+it("ask with a Zod 3 output format throws before sending the request", async () => {
+  global.fetch = jest.fn() as jest.Mock;
+
+  const agent = new QueryAgent(mockClient());
+
+  await expect(
+    agent.ask("What is the capital of France?", {
+      collections: ["test-collection"],
+      // @ts-expect-error a Zod 3 schema is not a valid outputFormat type
+      outputFormat: z3.object({ answer: z3.string() }),
+    }),
+  ).rejects.toThrow("Zod 3 schema");
+  expect(global.fetch).not.toHaveBeenCalled();
 });
 
 it("ask with a raw JSON Schema output format parses the final answer as JSON", async () => {

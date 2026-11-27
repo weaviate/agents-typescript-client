@@ -1,5 +1,5 @@
 import { WeaviateClient } from "@weaviate/core";
-import { z } from "zod";
+import { z } from "zod/v4";
 import {
   QueryAgentResponse,
   ProgressMessage,
@@ -158,7 +158,7 @@ export class QueryAgent {
    * @example Structured output with a Zod schema. The final answer is parsed and
    * validated into the schema, and exposed (typed) on `finalAnswerParsed`.
    * ```ts
-   * import { z } from "zod";
+   * import { z } from "zod"; // "zod/v4" on Zod 3.25
    *
    * const CitedText = z.object({
    *   text: z.string(),
@@ -180,7 +180,7 @@ export class QueryAgent {
    * @example Image generation. Each image field is returned with the generated image
    * as base64. Use {@link generatedImageWithOptions} to set options such as the shape.
    * ```ts
-   * import { z } from "zod";
+   * import { z } from "zod"; // "zod/v4" on Zod 3.25
    * import { GeneratedImage } from "@weaviate/agents";
    *
    * const AnswerWithImage = z.object({
@@ -501,7 +501,7 @@ export class QueryAgent {
    * (the default), the final-state event is a {@link ParsedAskModeResponse} whose
    * `finalAnswerParsed` is typed from the schema.
    * ```ts
-   * import { z } from "zod";
+   * import { z } from "zod"; // "zod/v4" on Zod 3.25
    *
    * const CitedText = z.object({
    *   text: z.string(),
@@ -529,7 +529,7 @@ export class QueryAgent {
    *
    * @example Image generation. The image's base64 is only populated on the final state.
    * ```ts
-   * import { z } from "zod";
+   * import { z } from "zod"; // "zod/v4" on Zod 3.25
    * import { GeneratedImage } from "@weaviate/agents";
    *
    * const AnswerWithImage = z.object({
