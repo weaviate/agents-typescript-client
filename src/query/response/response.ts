@@ -1,5 +1,5 @@
 import { WeaviateReturn, WeaviateObject } from "@weaviate/core";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 export type AskModeResponse = {
   outputType: "finalState";
@@ -21,6 +21,9 @@ export type AskModeResponse = {
  * parsed and validated into the inferred type), or a plain object holding a
  * Draft 2020-12 JSON Schema (the final answer is parsed as JSON). Pass nothing
  * for no structured output.
+ *
+ * A Zod schema must be a Zod 4 schema: import `z` from `"zod"` on Zod 4, or
+ * from `"zod/v4"` on Zod 3.25.
  */
 export type OutputFormat = z.ZodType | Record<string, unknown>;
 

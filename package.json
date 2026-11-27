@@ -27,9 +27,10 @@
   "files": [
     "dist"
   ],
+  "//": "zod 3 floor is 3.25.16 because the package imports from zod/v4, which zod 3.25.0, 3.25.14 and 3.25.15 fail to resolve",
   "peerDependencies": {
     "@weaviate/core": "^3.15.0",
-    "zod": "^4.0.0"
+    "zod": "^3.25.16 || ^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",

@@ -22,7 +22,7 @@ import {
   ParsedAskModeResponse,
 } from "./response.js";
 
-import { z } from "zod";
+import { z } from "zod/v4";
 
 import {
   ApiQueryAgentResponse,

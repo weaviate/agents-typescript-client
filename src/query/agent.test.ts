@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { WeaviateClient } from "@weaviate/core";
 import { QueryAgent } from "./agent.js";
 import { ApiQueryAgentResponse } from "./response/api-response.js";
