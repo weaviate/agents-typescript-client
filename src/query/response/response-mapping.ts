@@ -48,9 +48,19 @@ import { ServerSentEvent } from "./server-sent-events.js";
  * Duck-types a value as a Zod schema (as opposed to a raw JSON Schema object):
  * only a Zod schema carries a `parse` method, and a function value can never
  * appear in a JSON-serialisable schema, so this reliably tells the two apart.
+ * Throws on a Zod 3 schema, which lacks the `_zod` property of a Zod 4 schema.
  */
-export const isZodSchema = (value: OutputFormat): value is z.ZodType =>
-  typeof (value as { parse?: unknown }).parse === "function";
+export const isZodSchema = (value: OutputFormat): value is z.ZodType => {
+  if (typeof (value as { parse?: unknown }).parse !== "function") {
+    return false;
+  }
+  if (!("_zod" in value)) {
+    throw new Error(
+      'outputFormat is a Zod 3 schema, but only Zod 4 schemas are supported. Import { z } from "zod/v4" instead.',
+    );
+  }
+  return true;
+};
 
 export function mapAskModeResponse(
   response: ApiAskModeResponse,
